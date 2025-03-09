@@ -14,23 +14,36 @@ const {
 
 /**
  * @swagger
- * /Booking/getall:
+ * tags:
+ *   - name: Bookings
+ *     description: API for managing hotel bookings
+ */
+
+/**
+ * @swagger
+ * /Booking:
  *   get:
  *     summary: Get all bookings
+ *     tags: [Bookings]
  *     description: Admin can retrieve all bookings.
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of all bookings
+ *       401:
+ *         description: Unauthorized - User must be authenticated
+ *       403:
+ *         description: Forbidden - Only admins can retrieve all bookings
  */
-router.get("/getall", [isAuthenticated, authorizeAdmin], getAllBookings);
+router.get("/", [isAuthenticated, authorizeAdmin], getAllBookings);
 
 /**
  * @swagger
- * /Booking/create:
+ * /Booking:
  *   post:
  *     summary: Create a new booking
+ *     tags: [Bookings]
  *     description: Authenticated users can create a booking.
  *     security:
  *       - bearerAuth: []
@@ -58,14 +71,19 @@ router.get("/getall", [isAuthenticated, authorizeAdmin], getAllBookings);
  *     responses:
  *       201:
  *         description: Booking created successfully
+ *       400:
+ *         description: Bad request - Invalid input data
+ *       401:
+ *         description: Unauthorized - User must be authenticated
  */
-router.post("/create", isAuthenticated, createBooking);
+router.post("/", isAuthenticated, createBooking);
 
 /**
  * @swagger
  * /Booking/range:
  *   post:
  *     summary: Get bookings within a specific date range
+ *     tags: [Bookings]
  *     description: Admin can retrieve all bookings within a given time range.
  *     security:
  *       - bearerAuth: []
@@ -92,9 +110,10 @@ router.post("/range", [isAuthenticated, authorizeAdmin], getBookingsInRange);
 
 /**
  * @swagger
- * /Booking/getById/{id}:
+ * /Booking/{id}:
  *   get:
  *     summary: Get booking by ID
+ *     tags: [Bookings]
  *     description: Authenticated users can retrieve details of a specific booking by its ID.
  *     security:
  *       - bearerAuth: []
@@ -108,14 +127,17 @@ router.post("/range", [isAuthenticated, authorizeAdmin], getBookingsInRange);
  *     responses:
  *       200:
  *         description: Booking details
+ *       404:
+ *         description: Booking not found
  */
-router.get("/getById/:id", isAuthenticated, getBookingById);
+router.get("/:id", isAuthenticated, getBookingById);
 
 /**
  * @swagger
- * /Booking/update/{id}:
- *   put:
+ * /Booking/{id}:
+ *   patch:
  *     summary: Update a booking
+ *     tags: [Bookings]
  *     description: Authenticated users can update their booking details.
  *     security:
  *       - bearerAuth: []
@@ -144,14 +166,19 @@ router.get("/getById/:id", isAuthenticated, getBookingById);
  *     responses:
  *       200:
  *         description: Booking updated successfully
+ *       400:
+ *         description: Bad request - Invalid input
+ *       404:
+ *         description: Booking not found
  */
-router.put("/update/:id", isAuthenticated, updateBooking);
+router.patch("/:id", isAuthenticated, updateBooking);
 
 /**
  * @swagger
- * /Booking/delete/{id}:
+ * /Booking/{id}:
  *   delete:
  *     summary: Delete a booking
+ *     tags: [Bookings]
  *     description: Users can delete their bookings, while admin can delete any booking.
  *     security:
  *       - bearerAuth: []
@@ -165,14 +192,17 @@ router.put("/update/:id", isAuthenticated, updateBooking);
  *     responses:
  *       200:
  *         description: Booking deleted successfully
+ *       404:
+ *         description: Booking not found
  */
-router.delete("/delete/:id", isAuthenticated, deleteBooking);
+router.delete("/:id", isAuthenticated, deleteBooking);
 
 /**
  * @swagger
- * /Booking/approve/{id}:
+ * /Booking/{id}/approve:
  *   patch:
  *     summary: Approve or reject a booking
+ *     tags: [Bookings]
  *     description: Only hosts can approve or reject a booking request.
  *     security:
  *       - bearerAuth: []
@@ -197,7 +227,9 @@ router.delete("/delete/:id", isAuthenticated, deleteBooking);
  *     responses:
  *       200:
  *         description: Booking status updated successfully
+ *       403:
+ *         description: Forbidden - Only hosts can approve bookings
  */
-router.patch("/approve/:id", [isAuthenticated, authorizeHost], approveBooking);
+router.patch("/:id/approve", [isAuthenticated, authorizeHost], approveBooking);
 
 module.exports = router;

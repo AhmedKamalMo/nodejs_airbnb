@@ -17,15 +17,27 @@ const {
 
 /**
  * @swagger
+ * tags:
+ *   - name: Users
+ *     description: API for managing users
+ */
+
+/**
+ * @swagger
  * /users:
  *   get:
  *     summary: Get all users
+ *     tags: [Users]
  *     description: Only admins can retrieve a list of all users.
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of users
+ *       401:
+ *         description: Unauthorized - Token missing or invalid
+ *       403:
+ *         description: Forbidden - Only admins can access
  */
 router.get("/", [isAuthenticated, authorizeAdmin], getAllUser);
 
@@ -34,6 +46,7 @@ router.get("/", [isAuthenticated, authorizeAdmin], getAllUser);
  * /users/{id}:
  *   get:
  *     summary: Get user by ID
+ *     tags: [Users]
  *     description: Only admins can retrieve user details by ID.
  *     security:
  *       - bearerAuth: []
@@ -47,14 +60,19 @@ router.get("/", [isAuthenticated, authorizeAdmin], getAllUser);
  *     responses:
  *       200:
  *         description: User details
+ *       401:
+ *         description: Unauthorized - Token missing or invalid
+ *       403:
+ *         description: Forbidden - Only admins can access
  */
 router.get("/:id", [isAuthenticated, authorizeAdmin], getUserById);
 
 /**
  * @swagger
- * /users/Registration:
+ * /users/register:
  *   post:
  *     summary: Register a new user
+ *     tags: [Users]
  *     description: Register a new user in the system.
  *     requestBody:
  *       required: true
@@ -66,20 +84,26 @@ router.get("/:id", [isAuthenticated, authorizeAdmin], getUserById);
  *               username:
  *                 type: string
  *                 example: "john_doe"
+ *               email:
+ *                 type: string
+ *                 example: "john@example.com"
  *               password:
  *                 type: string
  *                 example: "securepassword"
  *     responses:
  *       201:
  *         description: User registered successfully
+ *       400:
+ *         description: Bad request - Invalid input data
  */
-router.post("/Registration", Registration);
+router.post("/register", Registration);
 
 /**
  * @swagger
  * /users/{id}:
  *   patch:
  *     summary: Update user details
+ *     tags: [Users]
  *     description: Authenticated users can update their own details.
  *     security:
  *       - bearerAuth: []
@@ -103,6 +127,10 @@ router.post("/Registration", Registration);
  *     responses:
  *       200:
  *         description: User details updated successfully
+ *       401:
+ *         description: Unauthorized - Token missing or invalid
+ *       403:
+ *         description: Forbidden - Only the owner or admin can edit
  */
 router.patch("/:id", isAuthenticated, editUserById);
 
@@ -111,6 +139,7 @@ router.patch("/:id", isAuthenticated, editUserById);
  * /users/{id}:
  *   delete:
  *     summary: Delete a user
+ *     tags: [Users]
  *     description: Only admins can delete a user by ID.
  *     security:
  *       - bearerAuth: []
@@ -124,6 +153,10 @@ router.patch("/:id", isAuthenticated, editUserById);
  *     responses:
  *       200:
  *         description: User deleted successfully
+ *       401:
+ *         description: Unauthorized - Token missing or invalid
+ *       403:
+ *         description: Forbidden - Only admins can delete
  */
 router.delete("/:id", [isAuthenticated, authorizeAdmin], deleteUserById);
 
@@ -132,6 +165,7 @@ router.delete("/:id", [isAuthenticated, authorizeAdmin], deleteUserById);
  * /users/login:
  *   post:
  *     summary: User login
+ *     tags: [Users]
  *     description: Authenticate a user and generate a JWT token.
  *     requestBody:
  *       required: true
@@ -140,15 +174,17 @@ router.delete("/:id", [isAuthenticated, authorizeAdmin], deleteUserById);
  *           schema:
  *             type: object
  *             properties:
- *               username:
+ *               email:
  *                 type: string
- *                 example: "john_doe"
+ *                 example: "john@example.com"
  *               password:
  *                 type: string
  *                 example: "securepassword"
  *     responses:
  *       200:
  *         description: JWT token generated successfully
+ *       400:
+ *         description: Bad request - Invalid credentials
  */
 router.post("/login", Login);
 

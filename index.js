@@ -25,30 +25,36 @@ mongoose
   });
 
 var cors = require("cors");
+
 app.use(cors());
 
 // إعدادات Swagger
-const swaggerOptions = {
+const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Airbnb API",
+      title: "My API",
       version: "1.0.0",
-      description: "Airbnb",
+      description: "API documentation",
     },
-    servers: [
-      {
-        url: "http://localhost:3000", 
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
       },
-    ],
+    },
+    security: [{ bearerAuth: [] }],
   },
-  apis: ["./routers/*.js"], 
+  apis: ["./routers/*.js"], // تأكد أن هذا المسار صحيح
 };
 
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
+const swaggerDocs = swaggerJsdoc(options);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-app.use("/airbnb/users", users);
+app.use("/users", users);
 app.use("/category", CategoryHotel);
 app.use("/Hotel", HotelRoutes);
 app.use("/Booking", Booking);
