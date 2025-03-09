@@ -15,9 +15,17 @@ const {
 
 /**
  * @swagger
+ * tags:
+ *   - name: Hotels
+ *     description: API for managing hotels
+ */
+
+/**
+ * @swagger
  * /Hotel:
  *   get:
  *     summary: Get all hotels
+ *     tags: [Hotels]
  *     description: Retrieve a list of all hotels.
  *     responses:
  *       200:
@@ -30,6 +38,7 @@ router.get("/", GetallHotel);
  * /Hotel/search:
  *   post:
  *     summary: Search hotels by name
+ *     tags: [Hotels]
  *     description: Search for hotels based on name.
  *     requestBody:
  *       required: true
@@ -44,14 +53,17 @@ router.get("/", GetallHotel);
  *     responses:
  *       200:
  *         description: List of matching hotels
+ *       400:
+ *         description: Bad request - Invalid input
  */
 router.post("/search", searchHotelByName);
 
 /**
  * @swagger
- * /Hotel/address:
+ * /Hotel/search/address:
  *   post:
  *     summary: Search hotels by address
+ *     tags: [Hotels]
  *     description: Search for hotels based on address.
  *     requestBody:
  *       required: true
@@ -66,14 +78,17 @@ router.post("/search", searchHotelByName);
  *     responses:
  *       200:
  *         description: List of matching hotels
+ *       400:
+ *         description: Bad request - Invalid input
  */
-router.post("/address", searchHotelByAddress);
+router.post("/search/address", searchHotelByAddress);
 
 /**
  * @swagger
  * /Hotel/{id}:
  *   get:
  *     summary: Get hotel by ID
+ *     tags: [Hotels]
  *     description: Retrieve hotel details by its ID.
  *     parameters:
  *       - in: path
@@ -85,14 +100,17 @@ router.post("/address", searchHotelByAddress);
  *     responses:
  *       200:
  *         description: Hotel details
+ *       404:
+ *         description: Hotel not found
  */
 router.get("/:id", GetHotelById);
 
 /**
  * @swagger
- * /Hotel/add:
+ * /Hotel:
  *   post:
  *     summary: Add a new hotel
+ *     tags: [Hotels]
  *     description: Only hosts can add a new hotel.
  *     security:
  *       - bearerAuth: []
@@ -112,14 +130,21 @@ router.get("/:id", GetHotelById);
  *     responses:
  *       201:
  *         description: Hotel added successfully
+ *       400:
+ *         description: Bad request - Invalid input
+ *       401:
+ *         description: Unauthorized - User must be authenticated
+ *       403:
+ *         description: Forbidden - Only hosts can add a hotel
  */
-router.post("/add", [isAuthenticated, authorizeHost], addHotel);
+router.post("/", [isAuthenticated, authorizeHost], addHotel);
 
 /**
  * @swagger
  * /Hotel/{id}:
  *   patch:
  *     summary: Update hotel details
+ *     tags: [Hotels]
  *     description: Only the hotel owner can update hotel details.
  *     security:
  *       - bearerAuth: []
@@ -143,6 +168,14 @@ router.post("/add", [isAuthenticated, authorizeHost], addHotel);
  *     responses:
  *       200:
  *         description: Hotel updated successfully
+ *       400:
+ *         description: Bad request - Invalid input
+ *       401:
+ *         description: Unauthorized - User must be authenticated
+ *       403:
+ *         description: Forbidden - Only the owner can update
+ *       404:
+ *         description: Hotel not found
  */
 router.patch("/:id", [isAuthenticated, authorizeHost], UpdateByID);
 
@@ -151,6 +184,7 @@ router.patch("/:id", [isAuthenticated, authorizeHost], UpdateByID);
  * /Hotel/{id}:
  *   delete:
  *     summary: Delete a hotel
+ *     tags: [Hotels]
  *     description: Only admins can delete a hotel.
  *     security:
  *       - bearerAuth: []
@@ -164,6 +198,12 @@ router.patch("/:id", [isAuthenticated, authorizeHost], UpdateByID);
  *     responses:
  *       200:
  *         description: Hotel deleted successfully
+ *       401:
+ *         description: Unauthorized - User must be authenticated
+ *       403:
+ *         description: Forbidden - Only admins can delete
+ *       404:
+ *         description: Hotel not found
  */
 router.delete("/:id", [isAuthenticated, authorizeAdmin], DeleteHotel);
 

@@ -13,9 +13,17 @@ const router = express.Router();
 
 /**
  * @swagger
+ * tags:
+ *   - name: Reviews
+ *     description: API for managing reviews
+ */
+
+/**
+ * @swagger
  * /reviews:
  *   get:
  *     summary: Get all reviews
+ *     tags: [Reviews]
  *     description: Retrieve a list of all reviews.
  *     responses:
  *       200:
@@ -28,6 +36,7 @@ router.get("/", getAllReviews);
  * /reviews/{id}:
  *   get:
  *     summary: Get a review by ID
+ *     tags: [Reviews]
  *     description: Retrieve a single review by its ID.
  *     parameters:
  *       - in: path
@@ -39,6 +48,8 @@ router.get("/", getAllReviews);
  *     responses:
  *       200:
  *         description: Review details
+ *       404:
+ *         description: Review not found
  */
 router.get("/:id", getReviewById);
 
@@ -47,6 +58,7 @@ router.get("/:id", getReviewById);
  * /reviews:
  *   post:
  *     summary: Create a new review
+ *     tags: [Reviews]
  *     description: Authenticated users can add a review.
  *     security:
  *       - bearerAuth: []
@@ -62,6 +74,8 @@ router.get("/:id", getReviewById);
  *                 example: "65ab123e8f0d3c3b5e5f4f1a"
  *               rating:
  *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
  *                 example: 5
  *               comment:
  *                 type: string
@@ -69,14 +83,19 @@ router.get("/:id", getReviewById);
  *     responses:
  *       201:
  *         description: Review added successfully
+ *       400:
+ *         description: Bad request - Invalid input
+ *       401:
+ *         description: Unauthorized - User must be authenticated
  */
 router.post("/", isAuthenticated, createReview);
 
 /**
  * @swagger
  * /reviews/{id}:
- *   put:
+ *   patch:
  *     summary: Update a review
+ *     tags: [Reviews]
  *     description: Only the review owner or an admin can update a review.
  *     security:
  *       - bearerAuth: []
@@ -96,6 +115,8 @@ router.post("/", isAuthenticated, createReview);
  *             properties:
  *               rating:
  *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
  *                 example: 4
  *               comment:
  *                 type: string
@@ -103,14 +124,23 @@ router.post("/", isAuthenticated, createReview);
  *     responses:
  *       200:
  *         description: Review updated successfully
+ *       400:
+ *         description: Bad request - Invalid input
+ *       401:
+ *         description: Unauthorized - User must be authenticated
+ *       403:
+ *         description: Forbidden - Only the owner or an admin can update
+ *       404:
+ *         description: Review not found
  */
-router.put("/:id", isAuthenticated, checkReviewOwner, updateReview);
+router.patch("/:id", isAuthenticated, checkReviewOwner, updateReview);
 
 /**
  * @swagger
  * /reviews/{id}:
  *   delete:
  *     summary: Delete a review
+ *     tags: [Reviews]
  *     description: Only the review owner or an admin can delete a review.
  *     security:
  *       - bearerAuth: []
@@ -124,6 +154,12 @@ router.put("/:id", isAuthenticated, checkReviewOwner, updateReview);
  *     responses:
  *       200:
  *         description: Review deleted successfully
+ *       401:
+ *         description: Unauthorized - User must be authenticated
+ *       403:
+ *         description: Forbidden - Only the owner or an admin can delete
+ *       404:
+ *         description: Review not found
  */
 router.delete("/:id", isAuthenticated, checkReviewOwner, deleteReviewById);
 

@@ -12,15 +12,25 @@ const {
 
 /**
  * @swagger
+ * tags:
+ *   - name: Hotel Categories
+ *     description: API for managing hotel categories
+ */
+
+/**
+ * @swagger
  * /category:
  *   get:
  *     summary: Get all hotel categories
+ *     tags: [Hotel Categories]
  *     description: Authenticated users can retrieve all hotel categories.
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of all hotel categories
+ *       401:
+ *         description: Unauthorized - User must be authenticated
  */
 router.get("/", isAuthenticated, getcategory);
 
@@ -29,6 +39,7 @@ router.get("/", isAuthenticated, getcategory);
  * /category:
  *   post:
  *     summary: Add a new hotel category
+ *     tags: [Hotel Categories]
  *     description: Only admins can add a new category.
  *     security:
  *       - bearerAuth: []
@@ -45,6 +56,12 @@ router.get("/", isAuthenticated, getcategory);
  *     responses:
  *       201:
  *         description: Category added successfully
+ *       400:
+ *         description: Bad request - Invalid input
+ *       401:
+ *         description: Unauthorized - User must be authenticated
+ *       403:
+ *         description: Forbidden - Only admins can add categories
  */
 router.post("/", [isAuthenticated, authorizeAdmin], add_category);
 
@@ -53,6 +70,7 @@ router.post("/", [isAuthenticated, authorizeAdmin], add_category);
  * /category/{id}:
  *   patch:
  *     summary: Update a hotel category
+ *     tags: [Hotel Categories]
  *     description: Only admins can update an existing category.
  *     security:
  *       - bearerAuth: []
@@ -76,6 +94,14 @@ router.post("/", [isAuthenticated, authorizeAdmin], add_category);
  *     responses:
  *       200:
  *         description: Category updated successfully
+ *       400:
+ *         description: Bad request - Invalid input
+ *       401:
+ *         description: Unauthorized - User must be authenticated
+ *       403:
+ *         description: Forbidden - Only admins can update categories
+ *       404:
+ *         description: Category not found
  */
 router.patch("/:id", [isAuthenticated, authorizeAdmin], updatecategory);
 
@@ -84,6 +110,7 @@ router.patch("/:id", [isAuthenticated, authorizeAdmin], updatecategory);
  * /category/{id}:
  *   delete:
  *     summary: Delete a hotel category
+ *     tags: [Hotel Categories]
  *     description: Only admins can delete a category.
  *     security:
  *       - bearerAuth: []
@@ -97,6 +124,12 @@ router.patch("/:id", [isAuthenticated, authorizeAdmin], updatecategory);
  *     responses:
  *       200:
  *         description: Category deleted successfully
+ *       401:
+ *         description: Unauthorized - User must be authenticated
+ *       403:
+ *         description: Forbidden - Only admins can delete categories
+ *       404:
+ *         description: Category not found
  */
 router.delete("/:id", [isAuthenticated, authorizeAdmin], Deletecategory);
 
