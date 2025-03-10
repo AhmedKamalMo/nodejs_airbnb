@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { isAuthenticated } = require("../middlewares/userauth");
-const { authorizeAdmin } = require("../middlewares/authrization");
+const { authorizeAdmin, authorizeHost } = require("../middlewares/authrization");
 
 const {
   add_category,
@@ -9,6 +9,7 @@ const {
   updatecategory,
   Deletecategory,
 } = require("../controller/categoryHotel");
+const { updateStatus } = require("../controller/Hotel");
 
 /**
  * @swagger
