@@ -125,7 +125,30 @@ const searchHotelByAddress = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const updateStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const validStatuses = ["available", "booked", "unavailable", "maintenance"];
 
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+
+    const hotel = await hotel_Model.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+
+    if (!hotel) {
+      return res.status(404).json({ message: "Hotel not found" });
+    }
+
+    res.status(200).json({ message: "Hotel status updated successfully", hotel });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+}
 
 module.exports = {
   addHotel,
@@ -135,4 +158,5 @@ module.exports = {
   UpdateByID,
   searchHotelByName,
   searchHotelByAddress,
+  updateStatus
 };

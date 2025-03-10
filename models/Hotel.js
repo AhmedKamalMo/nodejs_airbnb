@@ -59,6 +59,23 @@ const HotelSchema = mongoose.Schema({
     ref: "Category",
     required: [true, "Category is required"],
   },
+  status: {
+    type: String,
+    enum: ["available", "booked", "unavailable", "maintenance"],
+    default: "available",
+    required: [true, "Status is required"],
+  },
+  path: {
+    type: String,
+    unique: true,
+    required: [true, "Path is required"],
+    trim: true,
+  },
+  rooms: {
+    type: Number,
+    required: [true, "Number of rooms is required"],
+    min: [1, "A hotel must have at least one room"],
+  },
 });
 
 const Hotel = mongoose.model("Hotel", HotelSchema);

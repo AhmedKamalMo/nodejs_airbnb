@@ -11,6 +11,7 @@ const {
   UpdateByID,
   searchHotelByName,
   searchHotelByAddress,
+  updateStatus,
 } = require("../controller/Hotel");
 
 /**
@@ -206,5 +207,42 @@ router.patch("/:id", [isAuthenticated, authorizeHost], UpdateByID);
  *         description: Hotel not found
  */
 router.delete("/:id", [isAuthenticated, authorizeAdmin], DeleteHotel);
+/**
+ * @swagger
+ * /Hotel/status/{id}:
+ *   patch:
+ *     summary: Update the status of a hotel
+ *     tags: [Hotels]
+ *     description: Only hosts and admins can update the status of a hotel.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "65ab123e8f0d3c3b5e5f4f1a"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [available, booked, unavailable, maintenance]
+ *                 example: "maintenance"
+ *     responses:
+ *       200:
+ *         description: Hotel status updated successfully
+ *       400:
+ *         description: Invalid status value
+ *       404:
+ *         description: Hotel not found
+ */
+
+router.patch("/status/:id", [isAuthenticated, authorizeHost], updateStatus);
 
 module.exports = router;
