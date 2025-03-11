@@ -15,15 +15,21 @@ const mongoose = require("mongoose");
 app.use(express.json());
 app.use(express.static("static"));
 
-mongoose
-  .connect("mongodb://127.0.0.1:27017/airbnb")
-  .then(() => {
-    console.log("connection established");
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+// mongoose
+//   .connect("mongodb://127.0.0.1:27017/airbnb")
+//   .then(() => {
+//     console.log("connection established");
+//   })
+//   .catch((err) => {
+//     console.log(err);
+//   });
 
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log("✅ MongoDB Atlas Connected Successfully"))
+.catch(err => console.error("❌ MongoDB Connection Error:", err))
 var cors = require("cors");
 
 app.use(cors());
@@ -68,3 +74,4 @@ app.listen(3000, () => {
   console.log("server started on http://localhost:3000");
   console.log("Swagger Docs available at http://localhost:3000/api-docs");
 });
+
