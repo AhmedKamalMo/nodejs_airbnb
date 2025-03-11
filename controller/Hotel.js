@@ -30,7 +30,10 @@ const DeleteHotel = async (req, res) => {
 
 const GetallHotel = async (req, res) => {
   try {
-    const hotels = await hotel_Model.find().populate("categories"); // Fix population field
+const hotels = await hotel_Model.find().populate([
+  { path: "categories" },
+  { path: "hostId", select: "-password -__v" } 
+]);
     res.status(200).json(hotels);
   } catch (error) {
     res.status(500).json({ error: error.message });
