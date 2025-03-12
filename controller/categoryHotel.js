@@ -12,8 +12,8 @@ const add_category = async (req, res) => {
 }
 const getcategory = async (req, res) => {
     try {
-        const getallcategory = await category_Model.find();
-        res.status(201).json(getallcategory);
+    const getallcategory=await category_Model.find();
+    res.status(201).json(getallcategory);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
