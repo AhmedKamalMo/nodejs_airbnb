@@ -9,6 +9,7 @@ const CategoryHotel = require("./routers/categoryHotel");
 const Booking = require("./routers/Booking");
 const reviewRoutes = require("./routers/reviewRoutes");
 const users = require("./routers/usrs");
+const paymentRoutes = require("./routers/payment");
 
 require("dotenv").config();
 const mongoose = require("mongoose");
@@ -65,6 +66,7 @@ app.use("/category", CategoryHotel);
 app.use("/Hotel", HotelRoutes);
 app.use("/Booking", Booking);
 app.use("/reviews", reviewRoutes);
+app.use("/payments", paymentRoutes);
 
 app.use((err, req, res, next) => {
   res.status(500).json(err);
