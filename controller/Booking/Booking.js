@@ -58,7 +58,7 @@ exports.createBooking = async (req, res) => {
 
 exports.getAllBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find().populate("userId hostId");
+    const bookings = await Booking.find().populate("userId hostId propertyId");
     res.status(200).json(bookings);
   } catch (error) {
     res.status(500).json({ message: error.message });
