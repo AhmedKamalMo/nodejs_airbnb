@@ -1,4 +1,5 @@
 const Review = require("../models/Review"); // Import the Review model
+const mongoose = require("mongoose");
 
 // 🟢 جلب جميع التقييمات
 exports.getAllReviews = async (req, res) => {
@@ -73,4 +74,46 @@ exports.deleteReviewById = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
+
+
 };
+// exports.totalReviews = async (req, res) => {
+//   try {
+//     const { hotelId } = req.params;
+
+//     if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+//       return res.status(400).json({ message: "Invalid hotel ID format" });
+//     }
+
+//     console.log("Hotel ID Received:", hotelId);
+
+//     const testReviews = await Review.find({ HotelId: hotelId });
+//     console.log("Test Reviews Count:", testReviews.length);
+
+//     const result = await Review.aggregate([
+//       { $match: { HotelId: new mongoose.Types.ObjectId(hotelId) } }, // فلترة التقييمات حسب الفندق
+//       {
+//         $group: {
+//           _id: "$HotelId",
+//           averageRating: { $avg: "$rating" }, // حساب المتوسط
+//           totalReviews: { $sum: 1 }, // حساب عدد التقييمات
+//         },
+//       },
+//     ]);
+
+//     console.log("Aggregation Result:", result);
+
+//     if (!result.length) {
+//       return res.status(404).json({ message: "No reviews found for this hotel" });
+//     }
+
+//     res.status(200).json({
+//       hotelId,
+//       averageRating: result[0].averageRating.toFixed(2), // تقريب القيم العشرية
+//       totalReviews: result[0].totalReviews,
+//     });
+//   } catch (err) {
+//     console.error("Error:", err.message);
+//     res.status(500).json({ message: err.message });
+//   }
+// };

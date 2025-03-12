@@ -9,7 +9,8 @@ const {
   getBookingsInRange,
   getBookingById,
   updateBooking,
-  approveBooking,
+  confirmBooking,
+  cancelBooking,
 } = require("../controller/Booking/Booking");
 
 /**
@@ -199,11 +200,11 @@ router.delete("/:id", isAuthenticated, deleteBooking);
 
 /**
  * @swagger
- * /Booking/{id}/approve:
+ * /Booking/{id}/confirm:
  *   patch:
- *     summary: Approve or reject a booking
+ *     summary: Confirm a booking
  *     tags: [Bookings]
- *     description: Only hosts can approve or reject a booking request.
+ *     description: Only hosts can confirm a booking.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -213,23 +214,42 @@ router.delete("/:id", isAuthenticated, deleteBooking);
  *         schema:
  *           type: string
  *         example: "65d0123e8f0d3c3b5e5f4f1f"
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               status:
- *                 type: string
- *                 enum: [approved, rejected]
- *                 example: "approved"
  *     responses:
  *       200:
- *         description: Booking status updated successfully
+ *         description: Booking confirmed successfully
  *       403:
- *         description: Forbidden - Only hosts can approve bookings
+ *         description: Forbidden - Only hosts can confirm bookings
+ *       404:
+ *         description: Booking not found
  */
-router.patch("/:id/approve", [isAuthenticated, authorizeHost], approveBooking);
+router.patch("/:id/confirm", [isAuthenticated, authorizeAdmin], confirmBooking);
+
+/**
+ * @swagger
+ * /Booking/{id}/cancel:
+ *   patch:
+ *     summary: Cancel a booking
+ *     tags: [Bookings]
+ *     description: Only hosts can cancel a booking.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "65d0123e8f0d3c3b5e5f4f1f"
+ *     responses:
+ *       200:
+ *         description: Booking cancelled successfully
+ *       403:
+ *         description: Forbidden - Only hosts can cancel bookings
+ *       404:
+ *         description: Booking not found
+ */
+router.patch("/:id/cancel", [isAuthenticated, authorizeAdmin], cancelBooking);
+
+
 
 module.exports = router;

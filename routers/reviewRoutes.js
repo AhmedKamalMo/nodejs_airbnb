@@ -7,6 +7,7 @@ const {
   createReview,
   updateReview,
   deleteReviewById,
+  totalReviews,
 } = require("../controller/Reviews");
 const { checkReviewOwner } = require("../middlewares/checkReviw");
 const router = express.Router();
@@ -162,5 +163,27 @@ router.patch("/:id", isAuthenticated, checkReviewOwner, updateReview);
  *         description: Review not found
  */
 router.delete("/:id", isAuthenticated, checkReviewOwner, deleteReviewById);
+
+/**
+ * @swagger
+ * /reviews/hotel/{hotelId}/rating:
+ *   get:
+ *     summary: Get average rating for a hotel
+ *     tags: [Reviews]
+ *     description: Retrieve the average rating of a specific hotel.
+ *     parameters:
+ *       - in: path
+ *         name: hotelId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "65ab123e8f0d3c3b5e5f4f1a"
+ *     responses:
+ *       200:
+ *         description: Average rating retrieved successfully
+ *       404:
+ *         description: Hotel not found or no reviews available
+ */
+// router.get("/hotel/:hotelId/rating", totalReviews);
 
 module.exports = router;
