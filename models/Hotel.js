@@ -54,7 +54,7 @@ const HotelSchema = mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  categories: {
+  categoryId: {
     type: mongoose.SchemaTypes.ObjectId,
     ref: "Category",
     required: [true, "Category is required"],
