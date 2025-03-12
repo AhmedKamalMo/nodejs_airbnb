@@ -31,7 +31,7 @@ const DeleteHotel = async (req, res) => {
 const GetallHotel = async (req, res) => {
   try {
 const hotels = await hotel_Model.find().populate([
-  { path: "categories" },
+  { path: "categoryId" },
   { path: "hostId", select: "-password -__v" } 
 ]);
     res.status(200).json(hotels);
@@ -42,7 +42,10 @@ const hotels = await hotel_Model.find().populate([
 
 const GetHotelById = async (req, res) => {
   try {
-    const hotel = await hotel_Model.findById(req.params.id);
+    const hotel = await hotel_Model.findById(req.params.id).populate([
+      { path: "categoryId" },
+      { path: "hostId", select: "-password -__v" } 
+    ]);;
     if (!hotel) {
       return res.status(404).json({ message: "Hotel not found!" });
     }

@@ -13,8 +13,8 @@ const add_category=async(req,res)=>{
 const getcategory=async(req,res)=>{
     var category =req.body;
     try {
-    const getallcategory=await category_Model.find(category);
-    res.status(201).json({ message: "added to Hotel successfully",getallcategory });
+    const getallcategory=await category_Model.find();
+    res.status(201).json(getallcategory);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
