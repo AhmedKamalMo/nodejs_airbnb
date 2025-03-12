@@ -66,7 +66,7 @@ const HotelSchema = mongoose.Schema({
     required: [true, "Status is required"],
   },
   path: {
-    type: String,
+    type: Number,
     unique: true,
     required: [true, "Path is required"],
     trim: true,

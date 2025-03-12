@@ -176,10 +176,10 @@ router.delete("/:id", [isAuthenticated, authorizeAdmin], deleteUserById);
  *             properties:
  *               email:
  *                 type: string
- *                 example: "john@example.com"
+ *                 example: "admin@example.com"
  *               password:
  *                 type: string
- *                 example: "securepassword"
+ *                 example: "admin123!"
  *     responses:
  *       200:
  *         description: JWT token generated successfully

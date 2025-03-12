@@ -6,7 +6,7 @@ const swaggerUi = require("swagger-ui-express");
 // استيراد جميع المسارات
 const HotelRoutes = require("./routers/Hotel");
 const CategoryHotel = require("./routers/categoryHotel");
-const Booking = require("./routers/booking");
+const Booking = require("./routers/Booking");
 const reviewRoutes = require("./routers/reviewRoutes");
 const users = require("./routers/usrs");
 
@@ -15,14 +15,22 @@ const mongoose = require("mongoose");
 app.use(express.json());
 app.use(express.static("static"));
 
-mongoose
-  .connect("mongodb://127.0.0.1:27017/airbnb")
-  .then(() => {
-    console.log("connection established");
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log("✅ MongoDB Atlas Connected Successfully"))
+.catch(err => console.error("❌ MongoDB Connection Error:", err));
+
+
+// mongoose
+//   .connect("mongodb://127.0.0.1:27017/airbnb")
+//   .then(() => {
+//     console.log("connection established");
+//   })
+//   .catch((err) => {
+//     console.log(err);
+//   });
 
 var cors = require("cors");
 
