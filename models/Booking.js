@@ -59,17 +59,16 @@ const bookingSchema = new mongoose.Schema(
     },
     totalPrice: { type: Number, required: true },
   },
-  { timestamps: true } // تمكين `createdAt` و `updatedAt` تلقائيًا
+  { timestamps: true }
 );
 
-// ✅ Middleware للتحقق من تداخل التواريخ عند إنشاء أو تحديث الحجز
 bookingSchema.pre("save", async function (next) {
   const existingBooking = await mongoose.model("Booking").findOne({
     propertyId: this.propertyId,
-    status: { $ne: "cancelled" }, // لا نتحقق من الحجوزات الملغاة
+    status: { $ne: "cancelled" }, 
     $or: [
-      { startDate: { $lt: this.endDate, $gte: this.startDate } }, // الحجز الجديد يبدأ خلال حجز آخر
-      { endDate: { $gt: this.startDate, $lte: this.endDate } }, // الحجز الجديد ينتهي خلال حجز آخر
+      { startDate: { $lt: this.endDate, $gte: this.startDate } }, 
+      { endDate: { $gt: this.startDate, $lte: this.endDate } }, 
     ],
   });
 
