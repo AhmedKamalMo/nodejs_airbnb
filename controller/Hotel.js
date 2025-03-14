@@ -91,7 +91,7 @@ const searchHotelByName = async (req, res) => {
     }
 
     const hotels = await hotel_Model.find({
-      title: { $regex: new RegExp(title, "i") }, // Improved regex syntax
+      title: { $regex: new RegExp(title, "i") }, 
     });
 
     if (hotels.length === 0) {
@@ -106,7 +106,7 @@ const searchHotelByName = async (req, res) => {
 
 const searchHotelByAddress = async (req, res) => {
   try {
-    const { country, city } = req.body.address || {}; // استخراج القيم من العنوان
+    const { country, city } = req.body.address || {}; 
 
     if (!country && !city) {
       return res.status(400).json({ error: "Country or city is required for search" });

@@ -16,18 +16,17 @@ const reviewSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true, // ✅ جعل userId مطلوبًا
+      required: true, 
     },
     HotelId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Hotel",
-      required: true, // ✅ جعل HotelId مطلوبًا
+      required: true, 
     },
   },
-  { timestamps: true } // ✅ Mongoose سيُضيف `createdAt` و `updatedAt` تلقائيًا
+  { timestamps: true } 
 );
 
-// ✅ تحديث `updatedAt` تلقائيًا عند التعديل
 reviewSchema.pre("findOneAndUpdate", function (next) {
   this.set({ updatedAt: Date.now() });
   next();
