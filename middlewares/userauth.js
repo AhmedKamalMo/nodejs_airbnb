@@ -12,7 +12,6 @@ const isAuthenticated = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    // Verify the token and ensure it has an 'id' field
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -23,14 +22,12 @@ const isAuthenticated = async (req, res, next) => {
       return res.status(401).json({ message: "Unauthorized, invalid token" });
     }
 
-    // Retrieve the user associated with the token
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
       return res.status(401).json({ message: "Unauthorized, user not found" });
     }
 
-    // Attach the user to the request object
     req.user = user;
 
     next();

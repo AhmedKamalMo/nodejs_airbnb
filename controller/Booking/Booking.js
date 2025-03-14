@@ -6,8 +6,7 @@ exports.createBooking = async (req, res) => {
   try {
     const { propertyId, companions, petsAllowed, startDate, endDate, totalPrice } = req.body;
 
-    const property = await Hotel.findById(propertyId).populate("hostId"); // جلب الهوست أيضًا
-
+    const property = await Hotel.findById(propertyId).populate("hostId"); 
     if (!property) {
       return res.status(404).json({ message: "Property not found" });
     }
@@ -65,7 +64,6 @@ exports.getAllBookings = async (req, res) => {
   }
 };
 
-// الحصول على الحجوزات في نطاق تاريخي معين
 exports.getBookingsInRange = async (req, res) => {
   try {
     const { startDate, endDate } = req.body;
@@ -84,7 +82,6 @@ exports.getBookingsInRange = async (req, res) => {
   }
 };
 
-// الحصول على حجز معين بالـ ID
 exports.getBookingById = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id).populate("userId hostId");
@@ -97,22 +94,18 @@ exports.getBookingById = async (req, res) => {
   }
 };
 
-// تحديث الحجز
 exports.updateBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
 
-    // 1️⃣ التحقق من وجود الحجز
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    // 2️⃣ التحقق من أن المستخدم هو صاحب الحجز أو أدمن
     if (req.user.role !== "Admin" && booking.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "You are not authorized to update this booking" });
     }
 
-    // 3️⃣ تحديث الحجز
     const updatedBooking = await Booking.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -126,7 +119,6 @@ exports.updateBooking = async (req, res) => {
 };
 
 
-// حذف الحجز
 exports.deleteBooking = async (req, res) => {
   try {
     const deletedBooking = await Booking.findByIdAndDelete(req.params.id);
@@ -141,13 +133,11 @@ exports.deleteBooking = async (req, res) => {
 
 exports.confirmBooking = async (req, res) => {
   try {
-    // البحث عن الحجز
     const booking = await Booking.findById(req.params.id);
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    // تأكيد الحجز باستخدام updateOne
     await Booking.updateOne({ _id: req.params.id }, { status: "confirmed" });
 
     res.status(200).json({ message: "Booking confirmed successfully" });
@@ -158,13 +148,11 @@ exports.confirmBooking = async (req, res) => {
 
 exports.cancelBooking = async (req, res) => {
   try {
-    // البحث عن الحجز
     const booking = await Booking.findById(req.params.id);
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    // إلغاء الحجز باستخدام updateOne
     await Booking.updateOne({ _id: req.params.id }, { status: "cancelled" });
 
     res.status(200).json({ message: "Booking cancelled successfully" });
