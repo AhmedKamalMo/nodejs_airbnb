@@ -138,7 +138,7 @@ router.get("/:id", GetHotelById);
  *       403:
  *         description: Forbidden - Only hosts can add a hotel
  */
-router.post("/", [isAuthenticated, authorizeHost], addHotel);
+router.post("/", [isAuthenticated, authorizeAdmin], addHotel);
 
 /**
  * @swagger
@@ -178,7 +178,7 @@ router.post("/", [isAuthenticated, authorizeHost], addHotel);
  *       404:
  *         description: Hotel not found
  */
-router.patch("/:id", [isAuthenticated, authorizeHost], UpdateByID);
+router.patch("/:id", [isAuthenticated, authorizeAdmin], UpdateByID);
 
 /**
  * @swagger
@@ -243,6 +243,6 @@ router.delete("/:id", [isAuthenticated, authorizeAdmin], DeleteHotel);
  *         description: Hotel not found
  */
 
-router.patch("/status/:id", [isAuthenticated, authorizeHost], updateStatus);
+router.patch("/status/:id", [isAuthenticated, authorizeAdmin], updateStatus);
 
 module.exports = router;
