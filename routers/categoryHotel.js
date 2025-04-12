@@ -33,7 +33,7 @@ const { updateStatus } = require("../controller/Hotel");
  *       401:
  *         description: Unauthorized - User must be authenticated
  */
-router.get("/", isAuthenticated, getcategory);
+router.get("/", getcategory);
 
 /**
  * @swagger

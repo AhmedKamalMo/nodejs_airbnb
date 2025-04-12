@@ -30,10 +30,10 @@ const DeleteHotel = async (req, res) => {
 
 const GetallHotel = async (req, res) => {
   try {
-const hotels = await hotel_Model.find().populate([
-  { path: "categoryId" },
-  { path: "hostId", select: "-password -__v" } 
-]);
+    const hotels = await hotel_Model.find().populate([
+      { path: "categoryId" },
+      { path: "hostId", select: "-password -__v" }
+    ]);
     res.status(200).json(hotels);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -44,7 +44,7 @@ const GetHotelById = async (req, res) => {
   try {
     const hotel = await hotel_Model.findById(req.params.id).populate([
       { path: "categoryId" },
-      { path: "hostId", select: "-password -__v" } 
+      { path: "hostId", select: "-password -__v" }
     ]);;
     if (!hotel) {
       return res.status(404).json({ message: "Hotel not found!" });
@@ -91,7 +91,7 @@ const searchHotelByName = async (req, res) => {
     }
 
     const hotels = await hotel_Model.find({
-      title: { $regex: new RegExp(title, "i") }, 
+      title: { $regex: new RegExp(title, "i") },
     });
 
     if (hotels.length === 0) {
@@ -106,7 +106,7 @@ const searchHotelByName = async (req, res) => {
 
 const searchHotelByAddress = async (req, res) => {
   try {
-    const { country, city } = req.body.address || {}; 
+    const { country, city } = req.body.address || {};
 
     if (!country && !city) {
       return res.status(400).json({ error: "Country or city is required for search" });
@@ -156,6 +156,26 @@ const updateStatus = async (req, res) => {
   }
 }
 
+const searchHotelByCategory = async (req, res) => {
+  try {
+    const { id } = req.body || {};
+
+    if (!id) {
+      return res.status(400).json({ error: "Category is required for search" });
+    }
+
+    const hotels = await hotel_Model.find({ categoryId: id });
+
+    if (hotels.length === 0) {
+      return res.status(404).json({ message: "No hotels found" });
+    }
+
+    res.json({ message: "Hotels fetched successfully!", hotels });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   addHotel,
   DeleteHotel,
@@ -164,5 +184,6 @@ module.exports = {
   UpdateByID,
   searchHotelByName,
   searchHotelByAddress,
-  updateStatus
+  updateStatus,
+  searchHotelByCategory
 };
