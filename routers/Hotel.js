@@ -13,6 +13,7 @@ const {
   searchHotelByAddress,
   updateStatus,
   searchHotelByCategory,
+  searchHotelByPrice,
 } = require("../controller/Hotel");
 
 /**
@@ -269,5 +270,33 @@ router.delete("/:id", [isAuthenticated, authorizeAdmin], DeleteHotel);
  */
 
 router.patch("/status/:id", [isAuthenticated, authorizeAdmin], updateStatus);
+/**
+ * @swagger
+ * /Hotel/search/price:
+ *   post:
+ *     summary: Search hotels by price range
+ *     tags: [Hotels]
+ *     description: Search for hotels based on price range.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               minPrice:
+ *                 type: number
+ *                 example: 50
+ *               maxPrice:
+ *                 type: number
+ *                 example: 200
+ *     responses:
+ *       200:
+ *         description: List of matching hotels
+ *       400:
+ *         description: Bad request - Invalid input
+ */
+router.post("/search/price", searchHotelByPrice);
+
 
 module.exports = router;
