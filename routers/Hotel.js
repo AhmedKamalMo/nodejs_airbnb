@@ -12,6 +12,7 @@ const {
   searchHotelByName,
   searchHotelByAddress,
   updateStatus,
+  searchHotelByCategory,
 } = require("../controller/Hotel");
 
 /**
@@ -83,6 +84,30 @@ router.post("/search", searchHotelByName);
  *         description: Bad request - Invalid input
  */
 router.post("/search/address", searchHotelByAddress);
+/**
+ * @swagger
+ * /Hotel/search/category:
+ *   post:
+ *     summary: Search hotels by catogory
+ *     tags: [Hotels]
+ *     description: Search for hotels based on catogory.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 example: "65ab123e8f0d3c3b5e5f4f1a"
+ *     responses:
+ *       200:
+ *         description: List of matching hotels
+ *       400:
+ *         description: Bad request - Invalid input
+ */
+router.post("/search/category", searchHotelByCategory);
 
 /**
  * @swagger
