@@ -175,7 +175,35 @@ const searchHotelByCategory = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const searchHotelByPrice = async (req, res) => {
+  try {
+    const { minPrice, maxPrice } = req.body;
 
+    if (minPrice === undefined && maxPrice === undefined) {
+      return res.status(400).json({ error: "Please provide minPrice or maxPrice" });
+    }
+
+    const query = {};
+
+    query.pricePerNight = {};
+    if (minPrice !== undefined) {
+      query.pricePerNight.$gte = minPrice;
+    }
+    if (maxPrice !== undefined) {
+      query.pricePerNight.$lte = maxPrice;
+    }
+
+    const hotels = await hotel_Model.find(query);
+
+    if (hotels.length === 0) {
+      return res.status(404).json({ message: "No hotels found" });
+    }
+
+    res.json({ message: "Hotels fetched successfully!", hotels });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 module.exports = {
   addHotel,
   DeleteHotel,
@@ -185,5 +213,6 @@ module.exports = {
   searchHotelByName,
   searchHotelByAddress,
   updateStatus,
-  searchHotelByCategory
+  searchHotelByCategory,
+  searchHotelByPrice
 };
