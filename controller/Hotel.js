@@ -63,12 +63,12 @@ const UpdateByID = async (req, res) => {
       return res.status(404).json({ message: "Hotel not found!" });
     }
 
-    if (hotel.hostId.toString() !== req.user._id.toString()) {
-      console.log(hotel.hostId.toString());
-      console.log(req.user);
+    // if (hotel.hostId.toString() !== req.user._id.toString()) {
+    //   console.log(hotel.hostId.toString());
+    //   console.log(req.user);
 
-      return res.status(403).json({ message: "Access denied. You are not the owner of this hotel." });
-    }
+    //   return res.status(403).json({ message: "Access denied. You are not the owner of this hotel." });
+    // }
 
     const updatedHotel = await hotel_Model.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
