@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const usersModel = require("../../models/users");
-
+const mongoose = require('mongoose');
 const getAllUser = async (req, res, next) => {
   try {
     const users = await usersModel.find();
@@ -66,43 +66,89 @@ const deleteUserById = async (req, res) => {
   }
 };
 
-const addWishlist = async (req, res) => {
+const addWishlist = async (req, res, next) => {
   const { hotelId } = req.body;
   const id = req.user._id;
 
+  // التحقق من وجود hotelId
+  if (!hotelId) {
+    return res.status(400).json({ message: "Hotel ID is required" });
+  }
+
+  // التحقق من أن hotelId هو ObjectId صالح
+  // if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+  //   return res.status(400).json({ message: "Invalid Hotel ID" });
+  // }
 
   try {
-    const user = await usersModel.findById(id);
+    // تحديث قائمة الأمنيات باستخدام $addToSet
+    const user = await usersModel.findByIdAndUpdate(
+      id,
+      { $addToSet: { wishlist: hotelId } },
+      { new: true }
+    );
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
-    }
-
-    if (!user.wishlist.includes(hotelId)) {
-      user.wishlist.push(hotelId);
-      await user.save();
     }
 
     res.status(200).json({ message: "Hotel added to wishlist", wishlist: user.wishlist });
   } catch (err) {
-    next({ message: "Failed to add hotel to wishlist", error: err.message });
+    next(new Error("Failed to add hotel to wishlist"));
   }
 };
-const getWishlist = async (req, res) => {
+
+const getWishlist = async (req, res, next) => {
   const id = req.user._id;
 
   try {
+    // الحصول على قائمة الأمنيات مع Populate
     const user = await usersModel.findById(id).populate("wishlist");
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    if (user.wishlist.length === 0) {
-      return res.status(200).json({ message: "Wishlist is empty", wishlist: [] });
-    }
+
     res.status(200).json({ message: "Success", wishlist: user.wishlist });
-
-
   } catch (err) {
-    next({ message: "Failed to get  wishlist", error: err.message });
+    next(new Error("Failed to get wishlist"));
+  }
+};
+
+
+const removeFromWishlist = async (req, res, next) => {
+  const { hotelId } = req.body;
+  const id = req.user._id;
+
+  if (!hotelId || hotelId.trim() === "") {
+    return res.status(400).json({ message: "Hotel ID is required" });
+  }
+
+
+  if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+    return res.status(400).json({ message: "Invalid Hotel ID" });
+  }
+
+  try {
+    const user = await usersModel.findByIdAndUpdate(
+      id,
+      { $pull: { wishlist: new mongoose.Types.ObjectId(hotelId) } }, 
+      { new: true }
+    );
+
+    console.log("Updated User:", user);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "Hotel removed from wishlist",
+      wishlist: user.wishlist
+    });
+  } catch (err) {
+    console.error("Error removing hotel from wishlist:", err.message);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
   }
 };
 module.exports = {
@@ -112,5 +158,6 @@ module.exports = {
   editUserById,
   deleteUserById,
   addWishlist,
-  getWishlist
+  getWishlist,
+  removeFromWishlist
 };
