@@ -59,6 +59,10 @@ const userSchema = new mongoose.Schema({
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+  wishlist: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Hotel',
+  }]
 });
 
 userSchema.pre("save", async function (next) {
