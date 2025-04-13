@@ -3,10 +3,12 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const router = express.Router();
 const usersModel = require("../models/users");
-const Registration = require("../controller/user/Registration");
+// const Registration = require("../controller/user/Registration");
 const Login = require("../controller/user/login");
 const { isAuthenticated } = require("../middlewares/userauth");
 const { authorizeAdmin } = require("../middlewares/authrization");
+const{googleLogin}= require('../controller/user/Registration');
+
 
 const {
   deleteUserById,
@@ -174,8 +176,10 @@ router.get("/:id", [isAuthenticated, authorizeAdmin], getUserById);
  *       400:
  *         description: Bad request - Invalid input data
  */
-router.post("/register", Registration);
-
+// ghada////
+// router.post("/register", Registration);
+router.post('/google', googleLogin);
+///ghada/////
 /**
  * @swagger
  * /users/{id}:
