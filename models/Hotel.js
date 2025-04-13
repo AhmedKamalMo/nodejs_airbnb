@@ -14,11 +14,13 @@ const HotelSchema = mongoose.Schema({
     required: [true, "Description is required"],
     trim: true,
     minlength: [10, "Description must be at least 10 characters"],
+    maxlength: [500, "Description cannot exceed 500 characters"],
   },
   pricePerNight: {
     type: Number,
     required: [true, "Price per night is required"],
     min: [1, "Price per night must be at least 1"],
+    max: [10000, "Price per night cannot exceed 10,000"],
   },
   address: {
     country: {
@@ -26,12 +28,14 @@ const HotelSchema = mongoose.Schema({
       required: [true, "Country is required"],
       trim: true,
       minlength: [2, "Country name must be at least 2 characters"],
+      maxlength: [50, "Country name cannot exceed 50 characters"],
     },
     city: {
       type: String,
       required: [true, "City is required"],
       trim: true,
       minlength: [2, "City name must be at least 2 characters"],
+      maxlength: [50, "City name cannot exceed 50 characters"],
     },
   },
   images: {
@@ -39,10 +43,11 @@ const HotelSchema = mongoose.Schema({
     required: [true, "At least one image is required"],
     validate: {
       validator: function (v) {
-        return v.length > 0;
+        return Array.isArray(v) && v.length > 0;
       },
       message: "There must be at least one image",
     },
+    default: [],
   },
   rating: {
     type: Number,
@@ -61,21 +66,25 @@ const HotelSchema = mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["available", "booked", "unavailable", "maintenance"],
+    enum: {
+      values: ["available", "booked", "unavailable", "maintenance"],
+      message: "{VALUE} is not a valid status",
+    },
     default: "available",
     required: [true, "Status is required"],
   },
   path: {
     type: Number,
-    unique: true,
-    required: [true, "Path is required"],
-    trim: true,
+    required: [true, "Number of bathrooms is required"],
+    min: [1, "A hotel must have at least one bathroom"],
+    max: [5, "A hotel cannot have more than 5 bathrooms"],
   },
   rooms: {
     type: Number,
     required: [true, "Number of rooms is required"],
     min: [1, "A hotel must have at least one room"],
-  },
+    max: [5, "A hotel cannot have more than 5 rooms"],
+  }
 });
 
 const Hotel = mongoose.model("Hotel", HotelSchema);

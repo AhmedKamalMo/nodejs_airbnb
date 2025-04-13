@@ -13,6 +13,8 @@ const {
   getAllUser,
   getUserById,
   editUserById,
+  addWishlist,
+  getWishlist,
 } = require("../controller/admin/user");
 
 /**
@@ -21,6 +23,48 @@ const {
  *   - name: Users
  *     description: API for managing users
  */
+/**
+ * @swagger
+ * /users/wishlist:
+ *   get:
+ *     summary: Get user's wishlist
+ *     tags: [Users]
+ *     description: Retrieve the user's wishlist.
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           
+ *     responses:
+ *       201:
+ *         description: get wishlist successfully
+ *       400:
+ *         description: Bad request - Invalid input data
+ */
+router.get("/wishlist", isAuthenticated, getWishlist);
+/**
+ * @swagger
+ * /users/wishlist:
+ *   post:
+ *     summary: Add hotel to wishlist
+ *     tags: [Users]
+ *     description: Add a hotel to the user's wishlist.
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             hotelId:
+ *               type: string
+ *               example: "65ab123e8f0d3c3b5e5f4f1a"
+ *     responses:
+ *       201:
+ *         description: Hotel added to wishlist successfully
+ *       400:
+ *         description: Bad request - Invalid input data
+ */
+router.post("/wishlist", isAuthenticated, addWishlist);
 
 /**
  * @swagger
@@ -187,5 +231,26 @@ router.delete("/:id", [isAuthenticated, authorizeAdmin], deleteUserById);
  *         description: Bad request - Invalid credentials
  */
 router.post("/login", Login);
+router.delete("/wishlist/:hotelId", isAuthenticated, async (req, res) => {
+  const { hotelId } = req.params;
+  const userId = req.user._id; // Assuming you have the user ID in the request
+
+  try {
+    const updatedUser = await usersModel.findByIdAndUpdate(
+      userId,
+      { $pull: { wishlist: hotelId } },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "Hotel removed from wishlist", updatedUser });
+  } catch (error) {
+    console.error("Error removing hotel from wishlist:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 module.exports = router;

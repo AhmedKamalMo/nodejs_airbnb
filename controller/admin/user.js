@@ -66,10 +66,51 @@ const deleteUserById = async (req, res) => {
   }
 };
 
+const addWishlist = async (req, res) => {
+  const { hotelId } = req.body;
+  const id = req.user._id;
+
+
+  try {
+    const user = await usersModel.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.wishlist.includes(hotelId)) {
+      user.wishlist.push(hotelId);
+      await user.save();
+    }
+
+    res.status(200).json({ message: "Hotel added to wishlist", wishlist: user.wishlist });
+  } catch (err) {
+    next({ message: "Failed to add hotel to wishlist", error: err.message });
+  }
+};
+const getWishlist = async (req, res) => {
+  const id = req.user._id;
+
+  try {
+    const user = await usersModel.findById(id).populate("wishlist");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (user.wishlist.length === 0) {
+      return res.status(200).json({ message: "Wishlist is empty", wishlist: [] });
+    }
+    res.status(200).json({ message: "Success", wishlist: user.wishlist });
+
+
+  } catch (err) {
+    next({ message: "Failed to get  wishlist", error: err.message });
+  }
+};
 module.exports = {
   getAllUser,
   getUserById,
 
   editUserById,
   deleteUserById,
+  addWishlist,
+  getWishlist
 };

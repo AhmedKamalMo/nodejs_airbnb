@@ -170,7 +170,7 @@ const searchHotelByCategory = async (req, res) => {
       return res.status(404).json({ message: "No hotels found" });
     }
 
-    res.json({ message: "Hotels fetched successfully!", hotels });
+    res.json(hotels);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -199,7 +199,7 @@ const searchHotelByPrice = async (req, res) => {
       return res.status(404).json({ message: "No hotels found" });
     }
 
-    res.json({ message: "Hotels fetched successfully!", hotels });
+    res.json(hotels);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
