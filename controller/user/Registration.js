@@ -4,6 +4,7 @@
 // ghada update////
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const jwt = require('jsonwebtoken');
 
 // const Registration = async (req, res) => {
 //   try {
@@ -47,7 +48,11 @@ const googleLogin = async (req, res) => {
 
     // هنا تقدري تدخلي userId, email, name في قاعدة بياناتك
     console.log("User verified:", payload);
-
+    const serverToken = jwt.sign(
+      { id: userId, email: payload.email },  // البيانات اللي تحبي تخزنيها
+      process.env.JWT_SECRET,               // سر التوقيع - ضيفيه في ملف env
+      { expiresIn: '1h' }                   // مدة صلاحية التوكن
+    );
     res.json({
       success: true,
       user: {
@@ -55,7 +60,8 @@ const googleLogin = async (req, res) => {
         name: payload.name,
         email: payload.email,
         picture: payload.picture,
-      }
+      },
+      token: serverToken, // التوكن اللي انتي عملتيه
     });
 
   } catch (error) {
