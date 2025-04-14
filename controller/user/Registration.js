@@ -75,11 +75,90 @@
 
 /////////////////////////////////////////////////////
 // ghada update////
+// const { OAuth2Client } = require('google-auth-library');
+// const jwt = require('jsonwebtoken');
+// const usersModel = require('../../models/users');
+// const nodemailer = require('nodemailer');
+
+
+// const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// const googleLogin = async (req, res) => {
+//   const { idToken } = req.body;
+
+//   if (!idToken) {
+//     return res.status(400).json({ success: false, message: 'ID Token is required' });
+//   }
+
+//   try {
+//     // التحقق من التوكن مع Google
+//     const ticket = await client.verifyIdToken({
+//       idToken,
+//       audience: process.env.GOOGLE_CLIENT_ID,
+//     });
+
+//     const payload = ticket.getPayload();
+//     const { sub: googleId, email, name, picture } = payload;
+
+//     // التحقق من وجود المستخدم في قاعدة البيانات
+//     let user = await usersModel.findOne({ email });
+
+//     if (!user) {
+//       // المستخدم جديد — انشئ حساب جديد
+//       user = new usersModel({
+//         name,
+//         email,
+//         googleId,
+//         avatar: picture,
+//         isGoogleUser: true
+//       });
+
+//       await user.save();
+//       console.log(`✅ New user created: ${email}`);
+//     } else {
+//       console.log(`🔑 Existing user logged in: ${email}`);
+//     }
+
+//     // إنشاء JWT
+//     const serverToken = jwt.sign(
+//       { id: user._id, email: user.email },
+//       process.env.JWT_SECRET,
+//       { expiresIn: '1h' }
+//     );
+
+//     res.json({
+//       success: true,
+//       user: {
+//         id: user._id,
+//         name: user.name,
+//         email: user.email,
+//         picture: user.avatar
+//       },
+//       token: serverToken
+//     });
+
+//   } catch (error) {
+//     console.error('❌ Token verification failed:', error);
+//     res.status(401).json({ success: false, message: 'Invalid ID Token' });
+//   }
+// };
+
+// module.exports = { googleLogin };
 const { OAuth2Client } = require('google-auth-library');
+const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
-const usersModel = require('../../models/users');
+const usersModel = require("../../models/users");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// إعداد الـ transporter للإيميل (استخدام Gmail في المثال)
+const transporter = nodemailer.createTransport({
+  service: 'gmail',  // يمكن تغيير الخدمة أو استخدام SMTP مخصص
+  auth: {
+    user: 'ghadadodo524@gmail.com',  // الإيميل الذي ستُرسل منه الرسائل
+    pass: 'vlwo gavd guji yive'      // استخدم App Password وليس كلمة المرور العادية
+  }
+});
 
 const googleLogin = async (req, res) => {
   const { idToken } = req.body;
@@ -113,6 +192,23 @@ const googleLogin = async (req, res) => {
 
       await user.save();
       console.log(`✅ New user created: ${email}`);
+
+      // إرسال رسالة ترحيب عبر الإيميل
+      const mailOptions = {
+        from: 'ghadadodo524@gmail.com',  // من الإيميل الذي تم ضبطه في الـ transporter
+        to: email,                    // البريد الإلكتروني للمستخدم
+        subject: 'Welcome to Airbnb!',
+        text: `Hello ${name},\n\nThank you for signing up with us! We're excited to have you onboard in Airbnb. 😊`
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log('❌ Error sending email:', error);
+        } else {
+          console.log('✅ Welcome email sent:', info.response);
+        }
+      });
+
     } else {
       console.log(`🔑 Existing user logged in: ${email}`);
     }
