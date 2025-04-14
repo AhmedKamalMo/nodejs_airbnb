@@ -1,7 +1,7 @@
 // const jwt = require("jsonwebtoken");
 // const bcrypt = require("bcryptjs");
 // const usersModel = require("../../models/users");
-// ghada update////
+
 // const { OAuth2Client } = require('google-auth-library');
 // const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // const jwt = require('jsonwebtoken');
@@ -73,6 +73,8 @@
 
 // module.exports = { googleLogin };
 
+/////////////////////////////////////////////////////
+// ghada update////
 const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const usersModel = require('../../models/users');
