@@ -1,39 +1,31 @@
+// 
 const express = require("express");
 const app = express();
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
+const mongoose = require("mongoose");
+require("dotenv").config();
+var cors = require("cors");
 
-// استيراد جميع المسارات
 const HotelRoutes = require("./routers/Hotel");
 const CategoryHotel = require("./routers/categoryHotel");
 const Booking = require("./routers/Booking");
 const reviewRoutes = require("./routers/reviewRoutes");
-const usersRouter = require("./routers/usrs");
+const users = require("./routers/usrs");
 const paymentRoutes = require("./routers/payment");
 
-require("dotenv").config();
-const mongoose = require("mongoose");
 app.use(express.json());
 app.use(express.static("static"));
+app.use(cors());
 
-// mongoose
-//   .connect("mongodb://127.0.0.1:27017/airbnb")
-//   .then(() => {
-//     console.log("connection established");
-//   })
-//   .catch((err) => {
-//     console.log(err);
-//   });
 
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log("✅ MongoDB Atlas Connected Successfully"))
-.catch(err => console.error("❌ MongoDB Connection Error:", err))
-var cors = require("cors");
+  .then(() => console.log("✅ MongoDB Atlas Connected Successfully"))
+  .catch(err => console.error("❌ MongoDB Connection Error:", err))
 
-app.use(cors());
 
 // إعدادات Swagger
 const options = {
@@ -55,15 +47,15 @@ const options = {
     },
     security: [{ bearerAuth: [] }],
   },
-  apis: ["./routers/*.js"], // تأكد أن هذا المسار صحيح
+  apis: ["./routers/*.js"],
 };
 
 const swaggerDocs = swaggerJsdoc(options);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// app.use("/users", users);
-app.use('/api/users', usersRouter);
+// app.use('/api/users', usersRouter);
 
+app.use("/users", users);
 app.use("/category", CategoryHotel);
 app.use("/Hotel", HotelRoutes);
 app.use("/Booking", Booking);
