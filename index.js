@@ -8,7 +8,7 @@ const HotelRoutes = require("./routers/Hotel");
 const CategoryHotel = require("./routers/categoryHotel");
 const Booking = require("./routers/Booking");
 const reviewRoutes = require("./routers/reviewRoutes");
-const users = require("./routers/usrs");
+const usersRouter = require("./routers/usrs");
 const paymentRoutes = require("./routers/payment");
 
 require("dotenv").config();
@@ -61,7 +61,9 @@ const options = {
 const swaggerDocs = swaggerJsdoc(options);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-app.use("/users", users);
+// app.use("/users", users);
+app.use('/api/users', usersRouter);
+
 app.use("/category", CategoryHotel);
 app.use("/Hotel", HotelRoutes);
 app.use("/Booking", Booking);
