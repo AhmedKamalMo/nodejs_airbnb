@@ -5,79 +5,104 @@ const bookingSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: [true, "User ID is required"],
     },
-    hostId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    propertyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Hotel", // افتراض أن لديك موديل للعقارات
-      required: true,
-    },
-    companions: {
-      type: Number,
-      required: true,
-      min: [1, "At least one companion is required"],
-      max: [10, "Maximum 10 companions allowed"],
-    },
-    petsAllowed: {
-      type: Boolean,
-      default: false,
-    },
-    startDate: {
-      type: Date,
-      required: [true, "Start date is required"],
-      validate: {
-        validator: function (value) {
-          return value >= Date.now();
+
+    properties: [
+      {
+        propertyId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Hotel",
+          required: [true, "Property ID is required"],
         },
-        message: "Start date must be in the future",
-      },
-    },
-    endDate: {
-      type: Date,
-      required: [true, "End date is required"],
-      validate: {
-        validator: function (value) {
-          return this.startDate && value > this.startDate;
+        hostId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: [true, "Host ID is required"],
         },
-        message: "End date must be after the start date",
+        status: {
+          type: String,
+          enum: ["pending", "confirmed", "cancelled", "completed"],
+          default: "pending",
+        },
+        startDate: {
+          type: Date,
+          required: [true, "Start date is required"],
+          validate: {
+            validator: function (value) {
+              return value >= Date.now();
+            },
+            message: "Start date must be in the future",
+          },
+        },
+        endDate: {
+          type: Date,
+          required: [true, "End date is required"],
+          validate: {
+            validator: function (value) {
+              return this.startDate && value > this.startDate;
+            },
+            message: "End date must be after the start date",
+          },
+        },
+        price: {
+          type: Number,
+          required: [true, "Price is required"],
+          min: [0, "Price cannot be negative"],
+        },
+        companions: {
+          type: Number,
+          required: [true, "Number of companions is required"],
+          min: [1, "At least one companion is required"],
+          max: [10, "Maximum 10 companions allowed"],
+        },
+        petsAllowed: {
+          type: Boolean,
+          default: false,
+        },
+        paymentStatus: {
+          type: String,
+          enum: ["pending", "paid", "failed"],
+          default: "pending",
+        },
+        totalPrice: {
+          type: Number,
+          required: [true, "Total price is required"],
+          min: [0, "Total price cannot be negative"],
+        },
       },
-    },
-    status: {
-      type: String,
-      enum: ["pending", "confirmed", "cancelled", "completed"],
-      default: "pending",
-    },
-    paymentStatus: {
-      type: String,
-      enum: ["pending", "paid", "failed"],
-      default: "pending",
-    },
-    totalPrice: { type: Number, required: true },
+    ],
   },
   { timestamps: true }
 );
 
 bookingSchema.pre("save", async function (next) {
-  const existingBooking = await mongoose.model("Booking").findOne({
-    propertyId: this.propertyId,
-    status: { $ne: "cancelled" }, 
-    $or: [
-      { startDate: { $lt: this.endDate, $gte: this.startDate } }, 
-      { endDate: { $gt: this.startDate, $lte: this.endDate } }, 
-    ],
-  });
+  try {
+    for (const property of this.properties) {
+      const conflictingBooking = await mongoose.model("Booking").findOne({
+        "properties.propertyId": property.propertyId,
+        "properties.status": { $ne: "cancelled" },
+        $or: [
+          {
+            "properties.startDate": { $lt: property.endDate, $gte: property.startDate },
+          },
+          {
+            "properties.endDate": { $gt: property.startDate, $lte: property.endDate },
+          },
+        ],
+      });
 
-  if (existingBooking) {
-    return next(new Error("Booking date range conflicts with an existing booking."));
+      if (conflictingBooking) {
+        return next(new Error(`Booking conflict for property ID: ${property.propertyId}`));
+      }
+    }
+
+    next();
+  } catch (error) {
+    next(error);
   }
-
-  next();
 });
 
 const Booking = mongoose.model("Booking", bookingSchema);
+
 module.exports = Booking;

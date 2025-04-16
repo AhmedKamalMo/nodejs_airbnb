@@ -8,9 +8,18 @@ const {
   getAllBookings,
   getBookingsInRange,
   getBookingById,
-  updateBooking,
+  updatePropertyDates,
   confirmBooking,
   cancelBooking,
+  cancelPropertyInBooking,
+  confirmPropertyInBooking,
+  getBookingsByHost,
+  getBookingsByUser,
+  calculateHostRevenue,
+  filterBookingsByStatus,
+  getBookedDatesForProperty,
+  getAvailablePropertiesForDate,
+  getAvailablePropertiesForDateRange,
 } = require("../controller/Booking/Booking");
 
 /**
@@ -22,7 +31,7 @@ const {
 
 /**
  * @swagger
- * /Booking:
+ * /bookings:
  *   get:
  *     summary: Get all bookings
  *     tags: [Bookings]
@@ -38,10 +47,32 @@ const {
  *         description: Forbidden - Only admins can retrieve all bookings
  */
 router.get("/", [isAuthenticated, authorizeAdmin], getAllBookings);
-
 /**
  * @swagger
- * /Booking:
+ * /bookings/properties/{propertyId}/booked-dates:
+ *   get:
+ *     summary: Get all booked dates for a specific property
+ *     tags: [Bookings]
+ *     description: Retrieve all booked dates for a specific property.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: propertyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "65ab123e8f0d3c3b5e5f4f1a"
+ *     responses:
+ *       200:
+ *         description: List of booked dates for the property
+ *       404:
+ *         description: Property not found
+ */
+router.get("/properties/:propertyId/booked-dates", getBookedDatesForProperty);
+/**
+ * @swagger
+ * /bookings:
  *   post:
  *     summary: Create a new booking
  *     tags: [Bookings]
@@ -55,20 +86,38 @@ router.get("/", [isAuthenticated, authorizeAdmin], getAllBookings);
  *           schema:
  *             type: object
  *             properties:
- *               userId:
- *                 type: string
- *                 example: "65ab123e8f0d3c3b5e5f4f1a"
- *               hotelId:
- *                 type: string
- *                 example: "65cb456e8f0d3c3b5e5f4f1b"
- *               checkInDate:
- *                 type: string
- *                 format: date
- *                 example: "2025-04-10"
- *               checkOutDate:
- *                 type: string
- *                 format: date
- *                 example: "2025-04-15"
+ *               properties:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     propertyId:
+ *                       type: string
+ *                       example: "65ab123e8f0d3c3b5e5f4f1a"
+ *                     startDate:
+ *                       type: string
+ *                       format: date
+ *                       example: "2025-04-10"
+ *                     endDate:
+ *                       type: string
+ *                       format: date
+ *                       example: "2025-04-15"
+ *                     price:
+ *                       type: number
+ *                       example: 400
+ *                     companions:
+ *                       type: number
+ *                       example: 2
+ *                     petsAllowed:
+ *                       type: boolean
+ *                       example: false
+ *                     paymentStatus:
+ *                       type: string
+ *                       enum: ["pending", "paid", "failed"]
+ *                       example: "pending"
+ *                     totalPrice:
+ *                       type: number
+ *                       example: 800
  *     responses:
  *       201:
  *         description: Booking created successfully
@@ -81,7 +130,7 @@ router.post("/", isAuthenticated, createBooking);
 
 /**
  * @swagger
- * /Booking/range:
+ * /bookings/range:
  *   post:
  *     summary: Get bookings within a specific date range
  *     tags: [Bookings]
@@ -108,10 +157,24 @@ router.post("/", isAuthenticated, createBooking);
  *         description: List of bookings in the specified range
  */
 router.post("/range", [isAuthenticated, authorizeAdmin], getBookingsInRange);
+/**
+ * @swagger
+ * /bookings/user:
+ *   get:
+ *     summary: Get all bookings for a user
+ *     tags: [Bookings]
+ *     description: Users can retrieve all their bookings.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of bookings for the user
+ */
+router.get("/user", isAuthenticated, getBookingsByUser);
 
 /**
  * @swagger
- * /Booking/{id}:
+ * /bookings/{id}:
  *   get:
  *     summary: Get booking by ID
  *     tags: [Bookings]
@@ -135,11 +198,11 @@ router.get("/:id", isAuthenticated, getBookingById);
 
 /**
  * @swagger
- * /Booking/{id}:
+ * /bookings/{id}/properties/{propertyId}/dates:
  *   patch:
- *     summary: Update a booking
+ *     summary: Update dates for a specific property in a booking
  *     tags: [Bookings]
- *     description: Authenticated users can update their booking details.
+ *     description: Authenticated users can update the dates of a specific property in their booking.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -149,6 +212,12 @@ router.get("/:id", isAuthenticated, getBookingById);
  *         schema:
  *           type: string
  *         example: "65ce123e8f0d3c3b5e5f4f1d"
+ *       - in: path
+ *         name: propertyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "65ab123e8f0d3c3b5e5f4f1a"
  *     requestBody:
  *       required: true
  *       content:
@@ -156,27 +225,27 @@ router.get("/:id", isAuthenticated, getBookingById);
  *           schema:
  *             type: object
  *             properties:
- *               checkInDate:
+ *               startDate:
  *                 type: string
  *                 format: date
  *                 example: "2025-05-01"
- *               checkOutDate:
+ *               endDate:
  *                 type: string
  *                 format: date
  *                 example: "2025-05-07"
  *     responses:
  *       200:
- *         description: Booking updated successfully
+ *         description: Property dates updated successfully
  *       400:
  *         description: Bad request - Invalid input
  *       404:
- *         description: Booking not found
+ *         description: Booking or property not found
  */
-router.patch("/:id", isAuthenticated, updateBooking);
+router.patch("/:id/properties/:propertyId/dates", isAuthenticated, updatePropertyDates);
 
 /**
  * @swagger
- * /Booking/{id}:
+ * /bookings/{id}:
  *   delete:
  *     summary: Delete a booking
  *     tags: [Bookings]
@@ -200,7 +269,7 @@ router.delete("/:id", isAuthenticated, deleteBooking);
 
 /**
  * @swagger
- * /Booking/{id}/confirm:
+ * /bookings/{id}/confirm:
  *   patch:
  *     summary: Confirm a booking
  *     tags: [Bookings]
@@ -222,15 +291,15 @@ router.delete("/:id", isAuthenticated, deleteBooking);
  *       404:
  *         description: Booking not found
  */
-router.patch("/:id/confirm", [isAuthenticated, authorizeAdmin], confirmBooking);
+router.patch("/:id/confirm", [isAuthenticated, authorizeHost], confirmBooking);
 
 /**
  * @swagger
- * /Booking/{id}/cancel:
+ * /bookings/{id}/properties/{propertyId}/cancel:
  *   patch:
- *     summary: Cancel a booking
+ *     summary: Cancel a specific property in a booking
  *     tags: [Bookings]
- *     description: Only hosts can cancel a booking.
+ *     description: Users can cancel a specific property in their booking.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -240,16 +309,136 @@ router.patch("/:id/confirm", [isAuthenticated, authorizeAdmin], confirmBooking);
  *         schema:
  *           type: string
  *         example: "65d0123e8f0d3c3b5e5f4f1f"
+ *       - in: path
+ *         name: propertyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "65ab123e8f0d3c3b5e5f4f1a"
  *     responses:
  *       200:
- *         description: Booking cancelled successfully
- *       403:
- *         description: Forbidden - Only hosts can cancel bookings
+ *         description: Property cancelled successfully
  *       404:
- *         description: Booking not found
+ *         description: Booking or property not found
  */
-router.patch("/:id/cancel", [isAuthenticated, authorizeAdmin], cancelBooking);
+router.patch("/:id/properties/:propertyId/cancel", isAuthenticated, cancelPropertyInBooking);
+
+/**
+ * @swagger
+ * /bookings/{id}/properties/{propertyId}/confirm:
+ *   patch:
+ *     summary: Confirm a specific property in a booking
+ *     tags: [Bookings]
+ *     description: Hosts can confirm a specific property in a booking.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "65d0123e8f0d3c3b5e5f4f1f"
+ *       - in: path
+ *         name: propertyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "65ab123e8f0d3c3b5e5f4f1a"
+ *     responses:
+ *       200:
+ *         description: Property confirmed successfully
+ *       403:
+ *         description: Forbidden - Only hosts can confirm properties
+ *       404:
+ *         description: Booking or property not found
+ */
+router.patch("/:id/properties/:propertyId/confirm", [isAuthenticated, authorizeHost], confirmPropertyInBooking);
+
+/**
+ * @swagger
+ * /bookings/host:
+ *   get:
+ *     summary: Get all bookings for a host
+ *     tags: [Bookings]
+ *     description: Hosts can retrieve all bookings related to their properties.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of bookings for the host
+ */
+router.get("/host", [isAuthenticated, authorizeHost], getBookingsByHost);
 
 
+/**
+ * @swagger
+ * /bookings/host/revenue:
+ *   get:
+ *     summary: Calculate total revenue for a host
+ *     tags: [Bookings]
+ *     description: Hosts can calculate their total revenue from paid bookings.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Total revenue for the host
+ */
+router.get("/host/revenue", [isAuthenticated, authorizeHost], calculateHostRevenue);
 
+/**
+ * @swagger
+ * /bookings/filter:
+ *   get:
+ *     summary: Filter bookings by status
+ *     tags: [Bookings]
+ *     description: Admin can filter bookings by status (e.g., pending, confirmed).
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: ["pending", "confirmed", "cancelled", "completed"]
+ *         example: "confirmed"
+ *     responses:
+ *       200:
+ *         description: List of filtered bookings
+ */
+router.get("/filter", [isAuthenticated, authorizeAdmin], filterBookingsByStatus);
+
+
+/**
+ * @swagger
+ * /bookings/properties/available-range:
+ *   get:
+ *     summary: Get all available properties for a specific date range
+ *     tags: [Bookings]
+ *     description: Retrieve all properties that are available within a specific date range. If endDate is not provided, it defaults to the same day as startDate.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         example: "2023-11-15"
+ *       - in: query
+ *         name: endDate
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date
+ *         example: "2023-11-20"
+ *     responses:
+ *       200:
+ *         description: List of available properties
+ *       400:
+ *         description: Invalid date or missing parameters
+ */
+router.get("/properties/available-range", getAvailablePropertiesForDateRange);
 module.exports = router;
