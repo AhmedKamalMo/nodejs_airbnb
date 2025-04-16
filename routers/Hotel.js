@@ -42,7 +42,7 @@ router.get("/", GetallHotel);
  *   get:
  *     summary: Filter hotels based on various criteria
  *     tags: [Hotels]
- *     description: Search and filter hotels using query parameters such as price range, city, status, category, and sorting.
+ *     description: Search and filter hotels using query parameters such as price range, city, status, category, ratings, amenities, guests, pets, and sorting.
  *     parameters:
  *       - in: query
  *         name: rooms
@@ -53,7 +53,7 @@ router.get("/", GetallHotel);
  *         name: path
  *         schema:
  *           type: number
- *         description: Filter hotels by path (if applicable).
+ *         description: Filter hotels by the number of bathrooms.
  *       - in: query
  *         name: minPrice
  *         schema:
@@ -73,12 +73,54 @@ router.get("/", GetallHotel);
  *         name: status
  *         schema:
  *           type: string
- *         description: Filter hotels by status (e.g., active, inactive).
+ *         description: Filter hotels by status (e.g., available, booked, unavailable, maintenance).
  *       - in: query
  *         name: categoryId
  *         schema:
  *           type: string
  *         description: Filter hotels by category ID.
+ *       - in: query
+ *         name: rating
+ *         schema:
+ *           type: number
+ *         description: Filter hotels by minimum rating (e.g., 4 for 4 stars or higher).
+ *       - in: query
+ *         name: amenities
+ *         schema:
+ *           type: string
+ *         description: Filter hotels by amenities (comma-separated list of amenity IDs). Hotels must have all specified amenities.
+ *       - in: query
+ *         name: adults
+ *         schema:
+ *           type: number
+ *         description: Filter hotels by the minimum number of adults they can accommodate.
+ *       - in: query
+ *         name: children
+ *         schema:
+ *           type: number
+ *         description: Filter hotels by the minimum number of children they can accommodate.
+ *       - in: query
+ *         name: infants
+ *         schema:
+ *           type: number
+ *         description: Filter hotels by the minimum number of infants they can accommodate.
+ *       - in: query
+ *         name: pets
+ *         schema:
+ *           type: number
+ *         description: Filter hotels by the minimum number of pets they allow.
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter hotels by availability starting from this date (YYYY-MM-DD).
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter hotels by availability ending on this date (YYYY-MM-DD).
  *       - in: query
  *         name: sortBy
  *         schema:
