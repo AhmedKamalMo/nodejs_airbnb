@@ -14,6 +14,7 @@ const {
   updateStatus,
   searchHotelByCategory,
   searchHotelByPrice,
+  filterAll,
 } = require("../controller/Hotel");
 
 /**
@@ -35,7 +36,80 @@ const {
  *         description: List of hotels
  */
 router.get("/", GetallHotel);
-
+/**
+ * @swagger
+ * /Hotel/flitter:
+ *   get:
+ *     summary: Filter hotels based on various criteria
+ *     tags: [Hotels]
+ *     description: Search and filter hotels using query parameters such as price range, city, status, category, and sorting.
+ *     parameters:
+ *       - in: query
+ *         name: rooms
+ *         schema:
+ *           type: number
+ *         description: Filter hotels by the number of rooms.
+ *       - in: query
+ *         name: path
+ *         schema:
+ *           type: number
+ *         description: Filter hotels by path (if applicable).
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *         description: Minimum price per night for filtering hotels.
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *         description: Maximum price per night for filtering hotels.
+ *       - in: query
+ *         name: city
+ *         schema:
+ *           type: string
+ *         description: Filter hotels by city (case-insensitive).
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter hotels by status (e.g., active, inactive).
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: string
+ *         description: Filter hotels by category ID.
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *         description: Field to sort the results by (e.g., createdAt, pricePerNight).
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *         description: Sort order (ascending or descending).
+ *     responses:
+ *       200:
+ *         description: List of matching hotels.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Hotel'
+ *       400:
+ *         description: Bad request - Invalid input
+ *       500:
+ *         description: Server error
+ */
+router.get("/flitter", filterAll);
 /**
  * @swagger
  * /Hotel/search:
@@ -270,33 +344,7 @@ router.delete("/:id", [isAuthenticated, authorizeAdmin], DeleteHotel);
  */
 
 router.patch("/status/:id", [isAuthenticated, authorizeAdmin], updateStatus);
-/**
- * @swagger
- * /Hotel/search/price:
- *   post:
- *     summary: Search hotels by price range
- *     tags: [Hotels]
- *     description: Search for hotels based on price range.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               minPrice:
- *                 type: number
- *                 example: 50
- *               maxPrice:
- *                 type: number
- *                 example: 200
- *     responses:
- *       200:
- *         description: List of matching hotels
- *       400:
- *         description: Bad request - Invalid input
- */
-router.post("/search/price", searchHotelByPrice);
+
 
 
 module.exports = router;

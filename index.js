@@ -58,7 +58,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.use("/users", users);
 app.use("/category", CategoryHotel);
 app.use("/Hotel", HotelRoutes);
-app.use("/Booking", Booking);
+app.use("/Bookings", Booking);
 app.use("/reviews", reviewRoutes);
 app.use("/payments", paymentRoutes);
 

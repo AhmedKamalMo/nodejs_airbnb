@@ -204,6 +204,55 @@ const searchHotelByPrice = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+const filterAll = async (req, res) => {
+  try {
+    // Extract query parameters
+    const {
+      rooms,
+      path,
+      minPrice,
+      maxPrice,
+      city,
+      status,
+      categoryId,
+      sortBy = "createdAt",
+      order = "asc",
+    } = req.query;
+
+    // Build the filter object
+    let filter = {};
+
+    if (rooms) filter.rooms = Number(rooms);
+    if (path) filter.path = Number(path);
+
+    if (minPrice || maxPrice) {
+      filter.pricePerNight = {};
+      if (minPrice) filter.pricePerNight.$gte = Number(minPrice);
+      if (maxPrice) filter.pricePerNight.$lte = Number(maxPrice);
+    }
+
+    if (city) filter["address.city"] = new RegExp(city, "i");
+    if (status) filter.status = status;
+    if (categoryId) filter.categoryId = categoryId;
+
+    // Determine sort order
+    const sortOrder = order === "desc" ? -1 : 1;
+
+    // Fetch hotels based on the filter
+    const hotels = await hotel_Model.find(filter).sort({ [sortBy]: sortOrder });
+
+    // Respond with the results
+    res.status(200).json({
+      data: hotels,
+    });
+  } catch (error) {
+    // Handle server errors
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
 module.exports = {
   addHotel,
   DeleteHotel,
@@ -214,5 +263,6 @@ module.exports = {
   searchHotelByAddress,
   updateStatus,
   searchHotelByCategory,
-  searchHotelByPrice
+  searchHotelByPrice,
+  filterAll
 };
