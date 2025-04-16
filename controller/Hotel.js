@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const hotel_Model = require("../models/Hotel");
+const Booking = require("../models/Booking");
 
 const addHotel = async (req, res) => {
   try {
@@ -205,9 +206,9 @@ const searchHotelByPrice = async (req, res) => {
   }
 };
 
+
 const filterAll = async (req, res) => {
   try {
-    // Extract query parameters
     const {
       rooms,
       path,
@@ -216,11 +217,18 @@ const filterAll = async (req, res) => {
       city,
       status,
       categoryId,
+      rating,
+      amenities,
+      startDate,
+      endDate,
+      adults,
+      children,
+      infants,
+      pets,
       sortBy = "createdAt",
       order = "asc",
     } = req.query;
 
-    // Build the filter object
     let filter = {};
 
     if (rooms) filter.rooms = Number(rooms);
@@ -236,18 +244,80 @@ const filterAll = async (req, res) => {
     if (status) filter.status = status;
     if (categoryId) filter.categoryId = categoryId;
 
-    // Determine sort order
+
+    if (rating !== undefined) {
+      filter.rating = { $gte: Number(rating) };
+    }
+
+    if (amenities) {
+      const amenitiesArray = amenities.split(",").map((id) => mongoose.Types.ObjectId(id));
+      filter.amenities = { $all: amenitiesArray };
+    }
+
+    if (startDate) {
+      const targetStartDate = new Date(startDate);
+      const targetEndDate = endDate ? new Date(endDate) : new Date(startDate);
+
+      if (isNaN(targetStartDate.getTime()) || (endDate && isNaN(targetEndDate.getTime()))) {
+        return res.status(400).json({ message: "Invalid date format" });
+      }
+
+      if (targetStartDate > targetEndDate) {
+        return res.status(400).json({ message: "Start date must be before or equal to end date" });
+      }
+
+      const bookedProperties = await Booking.find({
+        properties: {
+          $elemMatch: {
+            status: { $ne: "cancelled" },
+            startDate: { $lt: targetEndDate },
+            endDate: { $gt: targetStartDate },
+          },
+        },
+      });
+
+      const bookedPropertyIds = bookedProperties.flatMap((booking) =>
+        booking.properties
+          .filter(
+            (property) =>
+              property.status !== "cancelled" &&
+              new Date(property.startDate) < targetEndDate &&
+              new Date(property.endDate) > targetStartDate
+          )
+          .map((property) => property.propertyId.toString())
+      );
+
+      filter._id = { $nin: bookedPropertyIds };
+    }
+
+    if (adults !== undefined || children !== undefined || infants !== undefined) {
+      filter.capacity = {};
+
+      if (adults !== undefined) {
+        filter.capacity.adults = { $gte: Number(adults) };
+      }
+      if (children !== undefined) {
+        filter.capacity.children = { $gte: Number(children) };
+      }
+      if (infants !== undefined) {
+        filter.capacity.infants = { $gte: Number(infants) };
+      }
+    }
+
+    if (pets !== undefined) {
+      filter.allowedPets = { $gte: Number(pets) };
+    }
+
     const sortOrder = order === "desc" ? -1 : 1;
 
-    // Fetch hotels based on the filter
-    const hotels = await hotel_Model.find(filter).sort({ [sortBy]: sortOrder });
+    const hotels = await hotel_Model.find(filter)
+      .populate("amenities")
+      .sort({ [sortBy]: sortOrder });
 
-    // Respond with the results
     res.status(200).json({
       data: hotels,
     });
   } catch (error) {
-    // Handle server errors
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
