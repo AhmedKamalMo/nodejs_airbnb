@@ -2,6 +2,21 @@ const mongoose = require("mongoose");
 
 const reviewSchema = new mongoose.Schema(
   {
+    bookingId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Booking",
+      required: true,
+    },
+    HotelId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Hotel",
+      required: true,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     rating: {
       type: Number,
       required: true,
@@ -10,25 +25,26 @@ const reviewSchema = new mongoose.Schema(
     },
     comment: {
       type: String,
-      required: true,
       maxlength: 300,
     },
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true, 
-    },
-    HotelId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Hotel",
-      required: true, 
+    createdAt: {
+      type: Date,
+      default: Date.now,
     },
   },
-  { timestamps: true } 
+  { timestamps: true }
 );
 
-reviewSchema.pre("findOneAndUpdate", function (next) {
-  this.set({ updatedAt: Date.now() });
+reviewSchema.pre("save", async function (next) {
+  const existingReview = await mongoose.model("Review").findOne({
+    bookingId: this.bookingId,
+    userId: this.userId,
+  });
+
+  if (existingReview) {
+    return next(new Error("You have already reviewed this booking"));
+  }
+
   next();
 });
 
