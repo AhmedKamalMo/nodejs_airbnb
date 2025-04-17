@@ -7,7 +7,6 @@ const bookingSchema = new mongoose.Schema(
       ref: "User",
       required: [true, "User ID is required"],
     },
-
     properties: [
       {
         propertyId: {
@@ -50,6 +49,26 @@ const bookingSchema = new mongoose.Schema(
           required: [true, "Price is required"],
           min: [0, "Price cannot be negative"],
         },
+        serviceFee: {
+          type: Number,
+          default: 0,
+          min: [0, "Service fee cannot be negative"],
+        },
+        taxes: {
+          type: Number,
+          default: 0,
+          min: [0, "Taxes cannot be negative"],
+        },
+        totalPrice: {
+          type: Number,
+          required: [true, "Total price is required"],
+          min: [0, "Total price cannot be negative"],
+        },
+        paymentMethod: {
+          type: String,
+          enum: ["credit_card", "paypal", "bank_transfer"],
+          required: [true, "Payment method is required"],
+        },
         companions: {
           type: Number,
           required: [true, "Number of companions is required"],
@@ -60,15 +79,11 @@ const bookingSchema = new mongoose.Schema(
           type: Boolean,
           default: false,
         },
-        paymentStatus: {
-          type: String,
-          enum: ["pending", "paid", "failed"],
-          default: "pending",
-        },
-        totalPrice: {
-          type: Number,
-          required: [true, "Total price is required"],
-          min: [0, "Total price cannot be negative"],
+        review: {
+          reviewId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Review",
+          },
         },
       },
     ],
@@ -76,19 +91,16 @@ const bookingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+
 bookingSchema.pre("save", async function (next) {
   try {
     for (const property of this.properties) {
       const conflictingBooking = await mongoose.model("Booking").findOne({
         "properties.propertyId": property.propertyId,
         "properties.status": { $ne: "cancelled" },
-        $or: [
-          {
-            "properties.startDate": { $lt: property.endDate, $gte: property.startDate },
-          },
-          {
-            "properties.endDate": { $gt: property.startDate, $lte: property.endDate },
-          },
+        $and: [
+          { "properties.startDate": { $lt: property.endDate } },
+          { "properties.endDate": { $gt: property.startDate } },
         ],
       });
 
