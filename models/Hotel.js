@@ -10,6 +10,11 @@ const HotelSchema = mongoose.Schema({
     minlength: [3, "Title must be at least 3 characters"],
     maxlength: [100, "Title cannot exceed 100 characters"],
   },
+  categoryId: {
+    type: mongoose.SchemaTypes.ObjectId,
+    ref: "Category",
+    required: [true, "Category is required"],
+  },
   description: {
     type: String,
     required: [true, "Description is required"],
