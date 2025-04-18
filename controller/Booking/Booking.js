@@ -6,15 +6,21 @@ exports.createBooking = async (req, res) => {
   try {
     const { properties } = req.body;
 
-
+    // Validate that properties is an array and not empty
     if (!Array.isArray(properties) || properties.length === 0) {
       return res.status(400).json({ message: "At least one property is required." });
     }
 
-
     const bookingProperties = [];
 
     for (const property of properties) {
+
+      if (!property.paymentMethod) {
+        return res.status(400).json({
+          message: `Payment method is required for property ID: ${property.propertyId}`,
+        });
+      }
+
 
       const hotel = await Hotel.findById(property.propertyId).populate("hostId");
       if (!hotel) {
@@ -25,6 +31,7 @@ exports.createBooking = async (req, res) => {
         return res.status(400).json({ message: `Property with ID ${property.propertyId} does not have a host.` });
       }
 
+
       const today = new Date();
       if (new Date(property.startDate) < today) {
         return res.status(400).json({ message: `Start date for property ${property.propertyId} must be in the future.` });
@@ -34,7 +41,7 @@ exports.createBooking = async (req, res) => {
         return res.status(400).json({ message: `End date for property ${property.propertyId} must be after the start date.` });
       }
 
-
+      
       const overlappingBooking = await Booking.findOne({
         "properties.propertyId": property.propertyId,
         "properties.status": { $ne: "cancelled" },
@@ -48,21 +55,21 @@ exports.createBooking = async (req, res) => {
         return res.status(400).json({ message: `Property with ID ${property.propertyId} is already booked for the selected dates.` });
       }
 
-
       bookingProperties.push({
         propertyId: property.propertyId,
         hostId: hotel.hostId._id,
-        status: "pending",
+        status: property.status,
         startDate: property.startDate,
         endDate: property.endDate,
         price: property.price,
+        serviceFee: property.serviceFee,
+        taxes: property.taxes,
+        totalPrice: property.totalPrice,
+        paymentMethod: property.paymentMethod,
         companions: property.companions,
         petsAllowed: property.petsAllowed,
-        paymentStatus: property.paymentStatus,
-        totalPrice: property.totalPrice,
       });
     }
-
 
     const booking = new Booking({
       userId: req.user._id,

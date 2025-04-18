@@ -23,21 +23,30 @@ exports.getReviewById = async (req, res) => {
 };
 
 exports.createReview = async (req, res) => {
-  const { rating, comment, HotelId } = req.body;
-  const userId = req.user._id; 
-
   try {
-    const newReview = new Review({
+    const { bookingId, HotelId, rating, comment } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      return res.status(400).json({ message: "Invalid bookingId format" });
+    }
+    if (!mongoose.Types.ObjectId.isValid(HotelId)) {
+      return res.status(400).json({ message: "Invalid HotelId format" });
+    }
+
+    const reviewData = {
+      bookingId:bookingId,
+      HotelId: HotelId,
+      userId: req.user._id,
       rating,
       comment,
-      HotelId,
-      userId,
-    });
+    };
 
-    const savedReview = await newReview.save();
-    res.status(201).json(savedReview);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+    const review = new Review(reviewData);
+    await review.save();
+
+    res.status(201).json({ message: "Review created successfully", review });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };
 
