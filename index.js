@@ -13,7 +13,7 @@ const Booking = require("./routers/Booking");
 const reviewRoutes = require("./routers/reviewRoutes");
 const users = require("./routers/usrs");
 const paymentRoutes = require("./routers/payment");
-
+const amenities=require("./routers/amenity")
 app.use(express.json());
 app.use(express.static("static"));
 app.use(cors());
@@ -61,7 +61,7 @@ app.use("/Hotel", HotelRoutes);
 app.use("/Bookings", Booking);
 app.use("/reviews", reviewRoutes);
 app.use("/payments", paymentRoutes);
-
+app.use("/amenities",amenities)
 app.use((err, req, res, next) => {
   res.status(500).json(err);
 });

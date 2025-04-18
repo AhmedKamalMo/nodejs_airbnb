@@ -4,14 +4,21 @@ const Booking = require("../models/Booking");
 
 const addHotel = async (req, res) => {
   try {
-    const hotels = req.body;
-    const { _id } = req.user
+    const { _id } = req.user;
+    const hotelData = req.body;
 
-    hotels.hostId = new mongoose.Types.ObjectId(_id); // Ensure hostId is an ObjectId
-    // console.log(hostId);
+    if (!hotelData.title || !hotelData.categoryId || !hotelData.pricePerNight) {
+      return res.status(400).json({ error: "Title, category ID, and price per night are required." });
+    }
 
-    const new_hotel = await hotel_Model.create(hotels);
-    res.status(201).json({ message: "Added to Hotel successfully", new_hotel });
+    hotelData.hostId = new mongoose.Types.ObjectId(_id);
+
+    const newHotel = await hotel_Model.create(hotelData);
+
+    res.status(201).json({
+      message: "Hotel added successfully",
+      data: newHotel
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -43,13 +50,21 @@ const GetallHotel = async (req, res) => {
 
 const GetHotelById = async (req, res) => {
   try {
-    const hotel = await hotel_Model.findById(req.params.id).populate([
-      { path: "categoryId" },
-      { path: "hostId", select: "-password -__v" }
-    ]);;
+    const hotel = await hotel_Model.findById(req.params.id)
+      .populate([
+        { path: "categoryId" },
+        { path: "hostId", select: "-password -__v" },
+        { path: "amenities" },
+        {
+          path: "reviews.reviewId",
+          populate: { path: "userId", select: "-password -__v" }
+        },
+      ]);
+
     if (!hotel) {
       return res.status(404).json({ message: "Hotel not found!" });
     }
+
     res.status(200).json(hotel);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -207,6 +222,7 @@ const searchHotelByPrice = async (req, res) => {
 };
 
 
+
 const filterAll = async (req, res) => {
   try {
     const {
@@ -215,6 +231,7 @@ const filterAll = async (req, res) => {
       minPrice,
       maxPrice,
       city,
+      country,
       status,
       categoryId,
       rating,
@@ -231,8 +248,8 @@ const filterAll = async (req, res) => {
 
     let filter = {};
 
-    if (rooms) filter.rooms = Number(rooms);
-    if (path) filter.path = Number(path);
+    if (rooms) filter["spaceDetails.rooms"] = Number(rooms);
+    if (path) filter["spaceDetails.path"] = Number(path);
 
     if (minPrice || maxPrice) {
       filter.pricePerNight = {};
@@ -241,9 +258,11 @@ const filterAll = async (req, res) => {
     }
 
     if (city) filter["address.city"] = new RegExp(city, "i");
-    if (status) filter.status = status;
-    if (categoryId) filter.categoryId = categoryId;
+    if (country) filter["address.country"] = new RegExp(country, "i");
 
+    if (status) filter.status = status;
+
+    if (categoryId) filter.categoryId = categoryId;
 
     if (rating !== undefined) {
       filter.rating = { $gte: Number(rating) };
@@ -305,17 +324,31 @@ const filterAll = async (req, res) => {
     }
 
     if (pets !== undefined) {
-      filter.allowedPets = { $gte: Number(pets) };
+      filter.petPolicy = pets === "allowed" ? "allowed" : { $ne: "allowed" };
     }
 
     const sortOrder = order === "desc" ? -1 : 1;
 
     const hotels = await hotel_Model.find(filter)
-      .populate("amenities")
+      .populate([
+        { path: "categoryId", select: "name description" },
+        { path: "hostId", select: "name email phone" },
+        { path: "amenities", select: "name icon" },
+        {
+          path: "reviews.reviewId",
+          populate: { path: "userId", select: "name email" },
+        },
+      ])
       .sort({ [sortBy]: sortOrder });
 
+
+    if (hotels.length === 0) {
+      return res.status(404).json({ message: "No hotels found matching the criteria" });
+    }
+
     res.status(200).json({
-      data: hotels,
+      message: "Hotels fetched successfully!",
+      data: hotels.map((hotel) => hotel.toObject({ virtuals: true })),
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
