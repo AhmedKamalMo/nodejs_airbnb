@@ -1,7 +1,7 @@
 const Booking = require("../../models/Booking");
 const Hotel = require("../../models/Hotel");
 const mongoose = require("mongoose");
-
+//test
 exports.createBooking = async (req, res) => {
   try {
     const { properties } = req.body;
