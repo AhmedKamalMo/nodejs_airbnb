@@ -33,8 +33,12 @@ const getUserById = async (req, res, next) => {
 const editUserById = async (req, res) => {
   const { id } = req.params;
   const data = req.body;
+  const userId = req.user._id;
 
   try {
+    if (id !== userId.toString()) {
+      return res.status(403).json({ message: "You are not authorized to edit this user" });
+    }
     const updatedUser = await usersModel.findByIdAndUpdate(
       id,
       { ...data, updatedAt: Date.now() },
@@ -132,7 +136,7 @@ const removeFromWishlist = async (req, res, next) => {
   try {
     const user = await usersModel.findByIdAndUpdate(
       id,
-      { $pull: { wishlist: new mongoose.Types.ObjectId(hotelId) } }, 
+      { $pull: { wishlist: new mongoose.Types.ObjectId(hotelId) } },
       { new: true }
     );
 
