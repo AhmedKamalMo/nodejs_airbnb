@@ -1,6 +1,6 @@
 const express = require("express");
 const Payment = require("../models/Payment");
-const { createPayment, getPayments, getPaymentsById, updatePaymentById, deletePaymentById, paymentsSummary } = require("../controller/payment");
+const { createPayment, getPayments, getPaymentsById, updatePaymentById, deletePaymentById, paymentsSummary, createPayPalPayment, executePayPalPayment } = require("../controller/payment");
 const router = express.Router();
 const { isAuthenticated } = require("../middlewares/userauth");
 const { authorizeAdmin } = require("../middlewares/authrization");
@@ -196,6 +196,22 @@ router.delete("/:id",[isAuthenticated, authorizeAdmin], deletePaymentById);
  */
 router.get("/payment/summary",[isAuthenticated, authorizeAdmin], paymentsSummary);
 
+router.post("/create-paypal-payment", [isAuthenticated], createPayPalPayment);
+router.post("/execute-paypal-payment", [isAuthenticated], executePayPalPayment);
 
+router.get('/paypal/return', async (req, res) => {
+    const { token } = req.query; // هذا هو orderId في الغالب
 
+    console.log('Order ID returned from PayPal:', token);
+
+    // هنا تنفذ الدفع فعليًا بستخدام executePayPalPayment
+    // مثلاً تبعت token لدالة تنفيذ الدفع
+    // await executePayPalPayment(token);
+
+    res.send('Payment Approved! Order ID: ' + token);
+});
+
+router.get('/paypal/cancel', (req, res) => {
+    res.send('Payment was cancelled by the user.');
+});
 module.exports = router;
