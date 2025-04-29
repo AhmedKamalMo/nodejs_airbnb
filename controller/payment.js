@@ -1,4 +1,6 @@
 const Payment = require("../models/Payment");
+const Booking = require("../models/Booking");
+const checkoutNodeJssdk = require("@paypal/checkout-server-sdk");
 
 exports.createPayment = async (req, res) => {
     try {
@@ -9,6 +11,7 @@ exports.createPayment = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 }
+
 exports.getPayments = async (req, res) => {
     try {
         const payments = await Payment.find(req.query);
@@ -17,6 +20,7 @@ exports.getPayments = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 }
+
 exports.getPaymentsById = async (req, res) => {
     try {
         const payment = await Payment.findById(req.params.id);
@@ -26,6 +30,7 @@ exports.getPaymentsById = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 }
+
 exports.updatePaymentById = async (req, res) => {
     try {
         const updatedPayment = await Payment.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -35,6 +40,7 @@ exports.updatePaymentById = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 }
+
 exports.deletePaymentById = async (req, res) => {
     try {
         const deletedPayment = await Payment.findByIdAndDelete(req.params.id);
@@ -44,6 +50,7 @@ exports.deletePaymentById = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 }
+
 exports.paymentsSummary = async (req, res) => {
 
     try {
@@ -73,3 +80,161 @@ exports.paymentsSummary = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 }
+
+//* paypal ------------------------------------------------------------------------------------------------------------------
+const { client } = require("../paypalConfig");
+
+exports.createPayPalPayment = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const { bookingId } = req.body;
+        const booking = await Booking.findById(bookingId);
+        if (!booking) {
+            return res.status(404).json({ message: "Booking not found" });
+        }
+        const amount = booking.properties.reduce((total, property) => total + property.totalPrice, 0);
+        console.log(amount);
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ message: "Invalid amount" });
+        }
+
+        // Calculate tax 
+        const taxRate = 0.14;
+        const taxAmount = parseFloat((amount * taxRate).toFixed(2));
+        const totalAmount = parseFloat((amount + taxAmount).toFixed(2));
+
+        const payment = new Payment({
+            bookingId,
+            userId,
+            amount: totalAmount,
+            status: "pending",
+            paymentMethod: "paypal",
+        });
+        await payment.save();
+
+        const request = new checkoutNodeJssdk.orders.OrdersCreateRequest();
+        request.prefer("return=representation");
+        request.requestBody({
+            intent: "CAPTURE",
+            purchase_units: [
+                {
+                    amount: {
+                        currency_code: "USD",
+                        value: totalAmount.toString(),
+                        breakdown: {
+                            item_total: {
+                                currency_code: "USD",
+                                value: amount.toString()
+                            },
+                            tax_total: {
+                                currency_code: "USD",
+                                value: taxAmount.toString()
+                            }
+                        }
+                    }
+                }
+            ],
+            application_context: {
+                return_url: "http://localhost:3000/payment/success",
+                cancel_url: "http://localhost:3000/payment/cancel",
+                user_action: "PAY_NOW",
+                shipping_preference: "NO_SHIPPING"
+            }
+        });
+
+        const response = await client().execute(request);
+        console.log("PayPal Create Order Response:", JSON.stringify(response.result, null, 2));
+
+        const approvalUrl = response.result.links.find((link) => link.rel === "approve").href;
+        res.json({
+            paymentId: payment._id,
+            approvalUrl,
+            orderId: response.result.id,
+            breakdown: {
+                subtotal: amount.toString(),
+                tax: taxAmount.toString(),
+                total: totalAmount.toString()
+            }
+        });
+        console.log("Payment record ID:", payment._id);
+        console.log("PayPal Order ID:", response.result.id);
+        console.log("Approval URL:", approvalUrl);
+    } catch (error) {
+        console.error("PayPal Create Order Error:", error);
+        res.status(500).json({
+            message: "Failed to create PayPal payment",
+            error: error.response ? error.response.message : error.message
+        });
+    }
+};
+
+exports.executePayPalPayment = async (req, res) => {
+    try {
+        const { paymentId, orderId } = req.body;
+
+        if (!paymentId || !orderId) {
+            return res.status(400).json({ message: "Payment ID and Order ID are required" });
+        }
+
+        const payment = await Payment.findById(paymentId);
+        if (!payment) {
+            return res.status(404).json({ message: "Payment not found" });
+        }
+
+        const request = new checkoutNodeJssdk.orders.OrdersCaptureRequest(orderId);
+        request.prefer("return=representation");
+
+        const response = await client().execute(request);
+
+        if (response.result.status === "COMPLETED") {
+            payment.status = "completed";
+            payment.transactionId = response.result.purchase_units[0].payments.captures[0].id;
+            await payment.save();
+
+            const booking = await Booking.findById(payment.bookingId);
+
+            if (!booking) {
+                return res.status(404).json({ message: "Booking not found" });
+            }
+
+            await Booking.updateOne(
+                { _id: payment.bookingId },
+                { $set: { "properties.$[].status": "completed" } }
+            );
+
+            res.json({
+                message: "Payment completed successfully",
+                transactionId: payment.transactionId,
+                status: payment.status,
+                bookingStatus: "completed"
+            });
+        } else {
+            payment.status = "failed";
+            await payment.save();
+
+            const booking = await Booking.findById(payment.bookingId);
+            if (booking) {
+                await Booking.updateOne(
+                    { _id: payment.bookingId },
+                    { $set: { "properties.$[elem].status": "cancelled" } },
+                    {
+                        arrayFilters: [{ "elem.status": "pending" }]
+                    }
+                );
+            }
+
+            res.status(400).json({
+                message: "Payment failed",
+                paypalStatus: response.result.status,
+                bookingStatus: "cancelled"
+            });
+        }
+    } catch (error) {
+        console.error("PayPal execution error:", error);
+        res.status(500).json({
+            message: "Failed to execute PayPal payment",
+            error: error.message
+        });
+    }
+};
