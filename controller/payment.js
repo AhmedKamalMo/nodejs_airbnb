@@ -81,6 +81,7 @@ exports.paymentsSummary = async (req, res) => {
     }
 }
 
+
 //* paypal ------------------------------------------------------------------------------------------------------------------
 const { client } = require("../paypalConfig");
 
@@ -235,6 +236,91 @@ exports.executePayPalPayment = async (req, res) => {
         res.status(500).json({
             message: "Failed to execute PayPal payment",
             error: error.message
+        });
+    }
+};
+
+exports.cancelPayment = async (req, res) => {
+    try {
+        const { paymentId } = req.params;
+
+        // Find the payment
+        const payment = await Payment.findById(paymentId);
+        if (!payment) {
+            return res.status(404).json({ message: "Payment not found" });
+        }
+
+        // Only allow cancellation of completed or pending payments
+        if (!["completed", "pending"].includes(payment.status)) {
+            return res.status(400).json({ 
+                message: "Cannot cancel payment", 
+                details: `Payment is already ${payment.status}` 
+            });
+        }
+
+        // If payment was completed and has a PayPal transaction, process refund
+        if (payment.status === "completed" && payment.transactionId && payment.paymentMethod === "paypal") {
+            try {
+                // Create a refund request
+                const request = new checkoutNodeJssdk.payments.CapturesRefundRequest(payment.transactionId);
+                request.requestBody({
+                    amount: {
+                        currency_code: "USD",
+                        value: payment.amount.toString()
+                    },
+                    note_to_payer: "Refund for cancelled booking"
+                });
+
+                // Process the refund
+                const refundResponse = await client().execute(request);
+                console.log("PayPal Refund Response:", JSON.stringify(refundResponse.result, null, 2));
+
+                if (refundResponse.result.status === "COMPLETED") {
+                    payment.status = "refunded";
+                } else {
+                    return res.status(400).json({
+                        message: "Failed to process refund",
+                        paypalStatus: refundResponse.result.status
+                    });
+                }
+            } catch (refundError) {
+                console.error("PayPal refund error:", refundError);
+                return res.status(500).json({
+                    message: "Failed to process PayPal refund",
+                    error: refundError.message
+                });
+            }
+        } else {
+            // If payment was pending or non-PayPal, just mark as cancelled
+            payment.status = "cancelled";
+        }
+
+        await payment.save();
+
+        // Update the associated booking status
+        const booking = await Booking.findById(payment.bookingId);
+        if (booking) {
+            booking.properties.forEach(property => {
+                if (["pending", "completed"].includes(property.status)) {
+                    property.status = "cancelled";
+                }
+            });
+            await booking.save();
+        }
+
+        res.json({ 
+            message: payment.status === "refunded" ? 
+                "Payment refunded successfully" : 
+                "Payment cancelled successfully",
+            paymentId: payment._id,
+            status: payment.status,
+            bookingStatus: "cancelled"
+        });
+    } catch (error) {
+        console.error("Cancel/Refund payment error:", error);
+        res.status(500).json({ 
+            message: "Failed to cancel/refund payment",
+            error: error.message 
         });
     }
 };
