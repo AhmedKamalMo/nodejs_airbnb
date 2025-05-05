@@ -239,7 +239,16 @@ exports.executePayPalPayment = async (req, res) => {
         });
     }
 };
+exports.paypalReturn = async (req, res) => {
+    const { token } = req.query;
 
+    console.log('Order ID returned from PayPal:', token);
+
+    res.send('Payment Approved! Order ID: ' + token);
+};
+exports.paypalCancel = (req, res) => {
+    res.send('Payment was cancelled by the user.');
+}
 exports.cancelPayment = async (req, res) => {
     try {
         const { paymentId } = req.params;
@@ -252,9 +261,9 @@ exports.cancelPayment = async (req, res) => {
 
         // Only allow cancellation of completed or pending payments
         if (!["completed", "pending"].includes(payment.status)) {
-            return res.status(400).json({ 
-                message: "Cannot cancel payment", 
-                details: `Payment is already ${payment.status}` 
+            return res.status(400).json({
+                message: "Cannot cancel payment",
+                details: `Payment is already ${payment.status}`
             });
         }
 
@@ -308,9 +317,9 @@ exports.cancelPayment = async (req, res) => {
             await booking.save();
         }
 
-        res.json({ 
-            message: payment.status === "refunded" ? 
-                "Payment refunded successfully" : 
+        res.json({
+            message: payment.status === "refunded" ?
+                "Payment refunded successfully" :
                 "Payment cancelled successfully",
             paymentId: payment._id,
             status: payment.status,
@@ -318,9 +327,9 @@ exports.cancelPayment = async (req, res) => {
         });
     } catch (error) {
         console.error("Cancel/Refund payment error:", error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: "Failed to cancel/refund payment",
-            error: error.message 
+            error: error.message
         });
     }
 };
