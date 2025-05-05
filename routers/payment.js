@@ -1,6 +1,6 @@
 const express = require("express");
 const Payment = require("../models/Payment");
-const { createPayment, getPayments, getPaymentsById, updatePaymentById, deletePaymentById, paymentsSummary, createPayPalPayment, executePayPalPayment, cancelPayment } = require("../controller/payment");
+const { createPayment, getPayments, getPaymentsById, updatePaymentById, deletePaymentById, paymentsSummary, createPayPalPayment, executePayPalPayment, cancelPayment, paypalReturn, paypalCancel } = require("../controller/payment");
 const router = express.Router();
 const { isAuthenticated } = require("../middlewares/userauth");
 const { authorizeAdmin } = require("../middlewares/authrization");
@@ -59,7 +59,7 @@ const { authorizeAdmin } = require("../middlewares/authrization");
  *       400:
  *         description: Bad request
  */
-router.post("/",[isAuthenticated, authorizeAdmin], createPayment);
+router.post("/", [isAuthenticated, authorizeAdmin], createPayment);
 
 /**
  * @swagger
@@ -73,7 +73,7 @@ router.post("/",[isAuthenticated, authorizeAdmin], createPayment);
  *       500:
  *         description: Internal server error
  */
-router.get("/",[isAuthenticated, authorizeAdmin], getPayments);
+router.get("/", [isAuthenticated, authorizeAdmin], getPayments);
 
 /**
  * @swagger
@@ -94,7 +94,7 @@ router.get("/",[isAuthenticated, authorizeAdmin], getPayments);
  *       404:
  *         description: Payment not found
  */
-router.get("/:id",[isAuthenticated, authorizeAdmin], getPaymentsById);
+router.get("/:id", [isAuthenticated, authorizeAdmin], getPaymentsById);
 
 /**
  * @swagger
@@ -121,7 +121,7 @@ router.get("/:id",[isAuthenticated, authorizeAdmin], getPaymentsById);
  *       404:
  *         description: Payment not found
  */
-router.put("/:id",[isAuthenticated, authorizeAdmin], updatePaymentById);
+router.put("/:id", [isAuthenticated, authorizeAdmin], updatePaymentById);
 
 /**
  * @swagger
@@ -142,7 +142,7 @@ router.put("/:id",[isAuthenticated, authorizeAdmin], updatePaymentById);
  *       404:
  *         description: Payment not found
  */
-router.delete("/:id",[isAuthenticated, authorizeAdmin], deletePaymentById);
+router.delete("/:id", [isAuthenticated, authorizeAdmin], deletePaymentById);
 
 /**
  * @swagger
@@ -216,24 +216,12 @@ router.post("/:paymentId/cancel", isAuthenticated, cancelPayment);
  *       500:
  *         description: Server error
  */
-router.get("/payment/summary",[isAuthenticated, authorizeAdmin], paymentsSummary);
+router.get("/payment/summary", [isAuthenticated, authorizeAdmin], paymentsSummary);
 
 router.post("/create-paypal-payment", [isAuthenticated], createPayPalPayment);
 router.post("/execute-paypal-payment", [isAuthenticated], executePayPalPayment);
 
-router.get('/paypal/return', async (req, res) => {
-    const { token } = req.query; // هذا هو orderId في الغالب
+router.get('/paypal/return', paypalReturn)
 
-    console.log('Order ID returned from PayPal:', token);
-
-    // هنا تنفذ الدفع فعليًا بستخدام executePayPalPayment
-    // مثلاً تبعت token لدالة تنفيذ الدفع
-    // await executePayPalPayment(token);
-
-    res.send('Payment Approved! Order ID: ' + token);
-});
-
-router.get('/paypal/cancel', (req, res) => {
-    res.send('Payment was cancelled by the user.');
-});
+router.get('/paypal/cancel', paypalCancel);
 module.exports = router;
