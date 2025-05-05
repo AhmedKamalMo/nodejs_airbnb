@@ -1,6 +1,6 @@
 const express = require("express");
 const Payment = require("../models/Payment");
-const { createPayment, getPayments, getPaymentsById, updatePaymentById, deletePaymentById, paymentsSummary } = require("../controller/payment");
+const { createPayment, getPayments, getPaymentsById, updatePaymentById, deletePaymentById, paymentsSummary, createPayPalPayment, executePayPalPayment, cancelPayment } = require("../controller/payment");
 const router = express.Router();
 const { isAuthenticated } = require("../middlewares/userauth");
 const { authorizeAdmin } = require("../middlewares/authrization");
@@ -26,7 +26,7 @@ const { authorizeAdmin } = require("../middlewares/authrization");
  *           description: The amount paid
  *         status:
  *           type: string
- *           enum: ["pending", "completed", "failed", "refunded"]
+ *           enum: ["pending", "completed", "failed", "cancelled", "refunded"]
  *         paymentMethod:
  *           type: string
  *           enum: ["credit_card", "debit_card", "paypal", "bank_transfer"]
@@ -144,6 +144,28 @@ router.put("/:id",[isAuthenticated, authorizeAdmin], updatePaymentById);
  */
 router.delete("/:id",[isAuthenticated, authorizeAdmin], deletePaymentById);
 
+/**
+ * @swagger
+ * /payments/{paymentId}/cancel:
+ *   post:
+ *     summary: Cancel a pending payment
+ *     tags: [Payments]
+ *     parameters:
+ *       - in: path
+ *         name: paymentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the payment to cancel
+ *     responses:
+ *       200:
+ *         description: Payment cancelled successfully
+ *       400:
+ *         description: Cannot cancel payment (e.g., already completed/cancelled)
+ *       404:
+ *         description: Payment not found
+ */
+router.post("/:paymentId/cancel", isAuthenticated, cancelPayment);
 
 /**
  * @swagger
@@ -196,6 +218,22 @@ router.delete("/:id",[isAuthenticated, authorizeAdmin], deletePaymentById);
  */
 router.get("/payment/summary",[isAuthenticated, authorizeAdmin], paymentsSummary);
 
+router.post("/create-paypal-payment", [isAuthenticated], createPayPalPayment);
+router.post("/execute-paypal-payment", [isAuthenticated], executePayPalPayment);
 
+router.get('/paypal/return', async (req, res) => {
+    const { token } = req.query; // هذا هو orderId في الغالب
 
+    console.log('Order ID returned from PayPal:', token);
+
+    // هنا تنفذ الدفع فعليًا بستخدام executePayPalPayment
+    // مثلاً تبعت token لدالة تنفيذ الدفع
+    // await executePayPalPayment(token);
+
+    res.send('Payment Approved! Order ID: ' + token);
+});
+
+router.get('/paypal/cancel', (req, res) => {
+    res.send('Payment was cancelled by the user.');
+});
 module.exports = router;
