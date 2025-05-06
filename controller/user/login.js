@@ -4,7 +4,7 @@ const usersModel = require("../../models/users");
 
 const Login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const {email , password } = req.body;
 
     // Input validation
     if (!email || !password) {
