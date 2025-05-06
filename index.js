@@ -66,7 +66,8 @@ app.use((err, req, res, next) => {
   res.status(500).json(err);
 });
 
-app.listen(3000, () => {
+const port=process.env.PORT || 3000;
+app.listen(port, () => {
   console.log("server started on http://localhost:3000");
   console.log("Swagger Docs available at http://localhost:3000/api-docs");
 });
