@@ -18,6 +18,15 @@ const Registration = async (req, res) => {
     //  Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+    let parsedAddress = address;
+
+    if (typeof address === 'string') {
+      const parts = address.split(',').map(part => part.trim());
+      parsedAddress = {
+        city: parts[0] || '',
+        country: parts[1] || ''
+      };
+    }
 
     // Create new user
     const newUser = new usersModel({
@@ -26,9 +35,13 @@ const Registration = async (req, res) => {
       email,
       password: hashedPassword, // استخدمي الباسورد المشفر
       dateOfBirth,
-      address,
+      address:parsedAddress
     });
 
+
+    // لو العنوان جاي كـ string (مثلاً: "Cairo, Egypt")، نقسمه
+    
+    
     await newUser.save();
     console.log(`✅ New user created: ${email}`);
     const token = jwt.sign(
