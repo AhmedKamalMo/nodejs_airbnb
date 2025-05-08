@@ -13,11 +13,17 @@ const Booking = require("./routers/Booking");
 const reviewRoutes = require("./routers/reviewRoutes");
 const users = require("./routers/usrs");
 const paymentRoutes = require("./routers/payment");
-const amenities=require("./routers/amenity")
+const amenities = require("./routers/amenity");
+const messageRoutes = require("./routers/message");
+
 app.use(express.json());
 app.use(express.static("static"));
 app.use(cors());
 
+// Configure Pusher credentials from environment variables
+if (!process.env.PUSHER_APP_ID || !process.env.PUSHER_KEY || !process.env.PUSHER_SECRET || !process.env.PUSHER_CLUSTER) {
+  console.warn("⚠️ Pusher credentials not found in environment variables");
+}
 
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
@@ -61,14 +67,14 @@ app.use("/Hotel", HotelRoutes);
 app.use("/Bookings", Booking);
 app.use("/reviews", reviewRoutes);
 app.use("/payments", paymentRoutes);
-app.use("/amenities",amenities)
+app.use("/amenities", amenities);
+app.use("/messages", messageRoutes);
 app.use((err, req, res, next) => {
   res.status(500).json(err);
 });
 
-const port=process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log("server started on http://localhost:3000");
   console.log("Swagger Docs available at http://localhost:3000/api-docs");
 });
-
