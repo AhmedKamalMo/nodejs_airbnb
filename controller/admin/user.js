@@ -2,6 +2,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const usersModel = require("../../models/users");
 const mongoose = require('mongoose');
+const { request } = require("express");
+
 const getAllUser = async (req, res, next) => {
   try {
     const users = await usersModel.find();
@@ -55,7 +57,22 @@ const editUserById = async (req, res) => {
     next(500).json({ message: "Failed to update user", error: err.message });
   }
 };
+const getUserProfile = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
 
+    const user = await usersModel.findById(userId).select("-password -googleId");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "Success", user });
+  } catch (err) {
+    console.error("Error fetching user profile:", err);
+    next(err);
+  }
+};
 const deleteUserById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -158,7 +175,8 @@ const removeFromWishlist = async (req, res, next) => {
 module.exports = {
   getAllUser,
   getUserById,
-
+  removeFromWishlist,
+  getUserProfile,
   editUserById,
   deleteUserById,
   addWishlist,

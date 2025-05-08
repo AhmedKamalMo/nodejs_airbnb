@@ -18,6 +18,7 @@ const {
   addWishlist,
   getWishlist,
   removeFromWishlist,
+  getUserProfile
 } = require("../controller/admin/user");
 
 /**
@@ -45,6 +46,48 @@ const {
  *         description: Bad request - Invalid input data
  */
 router.get("/wishlist", isAuthenticated, getWishlist);
+/**
+ * @swagger
+ * /users/profile:
+ *   get:
+ *     summary: Get the authenticated user's profile
+ *     tags: [Users]
+ *     description: Authenticated users can fetch their own profile details.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Success"
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     firstName:
+ *                       type: string
+ *                       example: "John"
+ *                     lastName:
+ *                       type: string
+ *                       example: "Doe"
+ *                     email:
+ *                       type: string
+ *                       example: "john.doe@example.com"
+ *                     phone:
+ *                       type: string
+ *                       example: "01012345678"
+ *                     role:
+ *                       type: string
+ *                       example: "Guest"
+ *       401:
+ *         description: Unauthorized - Token missing or invalid
+ */
+router.get("/profile", isAuthenticated, getUserProfile);
 /**
  * @swagger
  * /users/wishlist:
@@ -240,6 +283,7 @@ router.patch("/:id", isAuthenticated, editUserById);
  *       403:
  *         description: Forbidden - Only admins can delete
  */
+
 router.delete("/:id", [isAuthenticated, authorizeAdmin], deleteUserById);
 
 /**
@@ -270,4 +314,5 @@ router.delete("/:id", [isAuthenticated, authorizeAdmin], deleteUserById);
  */
 router.post("/login", Login);
 
-module.exports = router;
+module.exports = router; 
+// getUserProfile
