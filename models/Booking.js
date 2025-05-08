@@ -94,8 +94,12 @@ const bookingSchema = new mongoose.Schema(
 
 bookingSchema.pre("save", async function (next) {
   try {
+
     for (const property of this.properties) {
+      if (property.status === "cancelled") continue; 
+
       const conflictingBooking = await mongoose.model("Booking").findOne({
+        _id: { $ne: this._id },
         "properties.propertyId": property.propertyId,
         "properties.status": { $ne: "cancelled" },
         $and: [
@@ -103,6 +107,7 @@ bookingSchema.pre("save", async function (next) {
           { "properties.endDate": { $gt: property.startDate } },
         ],
       });
+
 
       if (conflictingBooking) {
         return next(new Error(`Booking conflict for property ID: ${property.propertyId}`));
