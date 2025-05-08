@@ -36,12 +36,8 @@ const Registration = async (req, res) => {
       password: hashedPassword, // استخدمي الباسورد المشفر
       dateOfBirth,
       address:parsedAddress
-    });
-
-
+    })
     // لو العنوان جاي كـ string (مثلاً: "Cairo, Egypt")، نقسمه
-    
-    
     await newUser.save();
     console.log(`✅ New user created: ${email}`);
     const token = jwt.sign(
