@@ -62,13 +62,32 @@ app.use("/Bookings", Booking);
 app.use("/reviews", reviewRoutes);
 app.use("/payments", paymentRoutes);
 app.use("/amenities",amenities)
+// Global error handling middleware
 app.use((err, req, res, next) => {
-  res.status(500).json(err);
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    error: {
+      message: err.message || 'Internal Server Error',
+      status: err.status || 500
+    }
+  });
 });
 
-const port=process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log("server started on http://localhost:3000");
-  console.log("Swagger Docs available at http://localhost:3000/api-docs");
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
+
+const port = process.env.PORT || 3000;
+
+// Export the Express API
+module.exports = app;
+
+// Only listen directly if not running on Vercel
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(port, () => {
+    console.log(`Server started on http://localhost:${port}`);
+    console.log(`Swagger Docs available at http://localhost:${port}/api-docs`);
+  });
+}
 
