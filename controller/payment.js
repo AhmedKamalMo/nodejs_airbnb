@@ -249,6 +249,7 @@ exports.paypalReturn = async (req, res) => {
 exports.paypalCancel = (req, res) => {
     res.send('Payment was cancelled by the user.');
 }
+
 exports.cancelPayment = async (req, res) => {
     try {
         const { paymentId } = req.params;
