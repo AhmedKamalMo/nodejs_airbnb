@@ -175,7 +175,7 @@ const googleLogin = async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    const { sub: googleId, email, name, picture } = payload;
+    const { sub: googleId, email, name, picture ,email_verified} = payload;
 
     // التحقق من وجود المستخدم في قاعدة البيانات
     let user = await usersModel.findOne({ email });
@@ -195,7 +195,7 @@ const googleLogin = async (req, res) => {
 
       // إرسال رسالة ترحيب عبر الإيميل
       const mailOptions = {
-        from: 'ghadadodo524@gmail.com',  // من الإيميل الذي تم ضبطه في الـ transporter
+        from: 'abdosa3oor@gmail.com',  // من الإيميل الذي تم ضبطه في الـ transporter
         to: email,                    // البريد الإلكتروني للمستخدم
         subject: 'Welcome to Airbnb!',
         text: `Hello ${name},\n\nThank you for signing up with us! We're excited to have you onboard in Airbnb. 😊`
@@ -203,21 +203,19 @@ const googleLogin = async (req, res) => {
 
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          console.log('❌ Error sending email:', error);
+          console.log('Error sending email:', error);
         } else {
-          console.log('✅ Welcome email sent:', info.response);
+          console.log('Welcome email sent:', info.response);
         }
       });
-
     } else {
-      console.log(`🔑 Existing user logged in: ${email}`);
+      console.log(`Existing user logged in: ${email}`);
     }
-
     // إنشاء JWT
     const serverToken = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: user._id },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '24h' }
     );
 
     res.json({
@@ -226,7 +224,8 @@ const googleLogin = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        picture: user.avatar
+        picture: user.avatar,
+        email_verified: email_verified
       },
       token: serverToken
     });
