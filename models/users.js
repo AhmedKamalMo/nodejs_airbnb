@@ -84,6 +84,8 @@ const bcrypt = require("bcryptjs");
 
 // upadte with ghadad
 const userSchema = new mongoose.Schema({
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
     firstName: {
     type: String,
     required: false,
