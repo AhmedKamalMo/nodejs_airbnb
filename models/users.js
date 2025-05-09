@@ -84,6 +84,7 @@ const bcrypt = require("bcrypt");
 
 // upadte with ghadad
 const userSchema = new mongoose.Schema({
+   uid: String,
     firstName: {
     type: String,
     required: false,
@@ -110,7 +111,7 @@ const userSchema = new mongoose.Schema({
   phone: {
     type: String,
     required: false,
-    match: [/^(01)(0|1|2|5)\d{8}$/, "Invalid phone number"],
+   match: [/^\+20(10|11|12|15)\d{8}$/, "Invalid Egyptian phone number"]
   },
   profileImage: { type: String, trim: true },
   dateOfBirth: {
@@ -130,7 +131,7 @@ const userSchema = new mongoose.Schema({
     city: { type: String, required: false, trim: true },
   },
   name: String,
-  email: { type: String, required: true, unique: true },
+  // email: { type: String, required: true, unique: true },
   googleId: String,
   avatar: String,
   isGoogleUser: { type: Boolean, default: false },

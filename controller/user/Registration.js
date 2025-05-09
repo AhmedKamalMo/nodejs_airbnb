@@ -158,9 +158,58 @@ const googleLogin = async (req, res) => {
     res.status(401).json({ success: false, message: 'Invalid ID Token' });
   }
 };
+// تسجيل الدخول باستخدام رقم الهاتف
+const phoneLogin = async (req, res) => {
+  try {
+    const { uid, phoneNumber } = req.body; // 👈 تم تغيير اسم المتغير هنا
+
+    if (!uid || !phoneNumber) {
+      return res.status(400).json({ message: "UID and phone number are required" });
+    }
+
+    // تحقق إذا كان المستخدم موجود بالفعل
+    let user = await usersModel.findOne({ phone: phoneNumber }); // 👈 تحديث هنا
+    if (!user) {
+      // أنشئ مستخدم جديد
+      user = new usersModel({
+        phone: phoneNumber, // 👈 تحديث هنا
+        firebaseUID: uid,
+        isPhoneUser: true,
+      });
+      await user.save();
+      console.log("✅ Phone user saved:", user.phone);
+    } else {
+      console.log("🔑 Existing phone user:", user.phone);
+    }
+
+    // Add a console log to ensure we're sending the right data
+    console.log("Returning user data:", {
+      id: user._id,
+      phoneNumber: user.phone,
+      firebaseUID: user.firebaseUID,
+      createdAt: user.createdAt
+    });
+
+    res.status(200).json({ 
+      message: "Phone user processed successfully", 
+      user: {
+        id: user._id,
+        phoneNumber: user.phone,
+        firebaseUID: user.firebaseUID,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (error) {
+    console.error("❌ Error in phone login:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 
 module.exports = {
   googleLogin,
-  Registration
+  Registration,
+  phoneLogin
 };
 

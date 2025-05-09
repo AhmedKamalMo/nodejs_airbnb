@@ -9,6 +9,7 @@ const { isAuthenticated } = require("../middlewares/userauth");
 const { authorizeAdmin } = require("../middlewares/authrization");
 const{googleLogin}= require('../controller/user/Registration');
 const checkEmail = require("../controller/user/check-email");
+const {phoneLogin} = require("../controller/user/Registration");
 
 const {
   deleteUserById,
@@ -271,5 +272,6 @@ router.delete("/:id", [isAuthenticated, authorizeAdmin], deleteUserById);
  */
 router.post("/login", Login);
 router.post("/check-email", checkEmail);
+router.post("/phone-login", phoneLogin);
 
 module.exports = router;
