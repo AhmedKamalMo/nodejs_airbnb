@@ -65,11 +65,8 @@ const Registration = async (req, res) => {
 };
 
 /////////////////////////////////////////////////////
-
 const { OAuth2Client } = require('google-auth-library');
 const nodemailer = require('nodemailer');
-
-
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // إعداد الـ transporter للإيميل (استخدام Gmail في المثال)
@@ -204,8 +201,6 @@ const phoneLogin = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
-
 
 module.exports = {
   googleLogin,
