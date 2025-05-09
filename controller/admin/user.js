@@ -172,6 +172,69 @@ const removeFromWishlist = async (req, res, next) => {
     res.status(500).json({ message: "Internal Server Error", error: err.message });
   }
 };
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await usersModel.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = Date.now() + 3600000; // Token valid for 1 hour
+
+    // Save hashed token to user
+    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    user.resetPasswordExpire = resetTokenExpiry;
+    await user.save();
+
+    // Create reset URL
+    const resetUrl = `${req.protocol}://${req.get('host')}/users/reset-password/${resetToken}`;
+    const message = `You requested a password reset. Please use this token to reset your password: ${resetToken}\n\nTo reset your password, make a POST request to: ${resetUrl}\n\nWith the following JSON body:\n{\n  "password": "your-new-password"\n}\n\nThis token will expire in 1 hour.`;
+
+    await sendEmail({
+      email: user.email,
+      subject: 'Password Reset Request',
+      message
+    });
+
+    res.status(200).json({ message: 'Password reset email sent' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ message: 'Error sending password reset email' });
+  }
+}
+const resetPassword = async (req, res) => {
+  try {
+    const resetPasswordToken = crypto
+      .createHash('sha256')
+      .update(req.params.token)
+      .digest('hex');
+
+    const user = await usersModel.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    // Set new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(req.body.password, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successful' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Error resetting password' });
+  }
+};
 module.exports = {
   getAllUser,
   getUserById,
@@ -181,5 +244,7 @@ module.exports = {
   deleteUserById,
   addWishlist,
   getWishlist,
-  removeFromWishlist
+  removeFromWishlist,
+  forgotPassword,
+  resetPassword
 };

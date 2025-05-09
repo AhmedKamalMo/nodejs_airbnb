@@ -1,11 +1,13 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const crypto = require('crypto');
 const router = express.Router();
 const usersModel = require("../models/users");
 // const Registration = require("../controller/user/Registration");
 const Login = require("../controller/user/login");
 const { isAuthenticated } = require("../middlewares/userauth");
+const sendEmail = require('../utils/sendEmail');
 const { authorizeAdmin } = require("../middlewares/authrization");
 const{googleLogin}= require('../controller/user/Registration');
 
@@ -18,7 +20,9 @@ const {
   addWishlist,
   getWishlist,
   removeFromWishlist,
-  getUserProfile
+  getUserProfile,
+  forgotPassword,
+  resetPassword
 } = require("../controller/admin/user");
 
 /**
@@ -143,6 +147,74 @@ router.post("/wishlist", isAuthenticated, addWishlist);
  *       404:
  *         description: User not found
  */
+router.delete("/wishlist", isAuthenticated, removeFromWishlist);
+
+/**
+ * @swagger
+ * /users/forgot-password:
+ *   post:
+ *     summary: Request password reset
+ *     tags: [Users]
+ *     description: Send a password reset token to user's email
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *             required:
+ *               - email
+ *     responses:
+ *       200:
+ *         description: Password reset email sent
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/forgot-password', forgotPassword);
+
+/**
+ * @swagger
+ * /users/reset-password/{token}:
+ *   post:
+ *     summary: Reset password using token
+ *     tags: [Users]
+ *     description: Reset user password using the token received via email
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: newPassword123
+ *             required:
+ *               - password
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ *       400:
+ *         description: Invalid or expired token
+ *       500:
+ *         description: Server error
+ */
+router.post('/reset-password/:token', resetPassword);
+
 router.delete("/wishlist", isAuthenticated, removeFromWishlist);
 
 /**
