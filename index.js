@@ -14,6 +14,7 @@ const reviewRoutes = require("./routers/reviewRoutes");
 const users = require("./routers/usrs");
 const paymentRoutes = require("./routers/payment");
 const amenities=require("./routers/amenity")
+const { scheduleBookingCleanup } = require('./utils/bookingCleanup');
 app.use(express.json());
 app.use(express.static("static"));
 app.use(cors());
@@ -23,7 +24,12 @@ mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-  .then(() => console.log("✅ MongoDB Atlas Connected Successfully"))
+  .then(() => {
+    console.log("✅ MongoDB Atlas Connected Successfully");
+    // Start the booking cleanup scheduler
+    scheduleBookingCleanup();
+    console.log("✅ Booking cleanup scheduler started");
+  })
   .catch(err => console.error("❌ MongoDB Connection Error:", err))
 
 
