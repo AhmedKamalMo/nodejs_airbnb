@@ -94,6 +94,11 @@ exports.createPayPalPayment = async (req, res) => {
         if (!booking) {
             return res.status(404).json({ message: "Booking not found" });
         }
+        const hasPendingProperty = booking.properties.some(prop => prop.status === 'pending');
+
+        if (!hasPendingProperty) {
+            return res.status(400).json({ message: "Cannot proceed with payment. No pending properties in the booking." });
+        }
         const amount = booking.properties.reduce((total, property) => total + property.totalPrice, 0);
         console.log(amount);
         if (!amount || amount <= 0) {
