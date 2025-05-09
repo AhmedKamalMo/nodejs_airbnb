@@ -3,7 +3,8 @@ const bcrypt = require("bcryptjs");
 const usersModel = require("../../models/users");
 const mongoose = require('mongoose');
 const { request } = require("express");
-
+const crypto = require("crypto");
+const sendEmail = require("../../utils/sendEmail");
 const getAllUser = async (req, res, next) => {
   try {
     const users = await usersModel.find();
