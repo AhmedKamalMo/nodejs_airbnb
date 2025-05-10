@@ -1,6 +1,7 @@
 const Booking = require("../../models/Booking");
 const Hotel = require("../../models/Hotel");
 const mongoose = require("mongoose");
+const Payment = require("../../models/Payment");
 //test
 exports.createBooking = async (req, res) => {
   try {
@@ -547,3 +548,27 @@ exports.calculateHostRevenue = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+exports.getPaymentIdByBookingId = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      return res.status(400).json({ message: "Invalid booking ID format" });
+    }
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    const paymentId = await Payment.findOne({ bookingId: bookingId });
+    console.log(paymentId);
+    if (!paymentId) {
+      return res.status(404).json({ message: "Payment ID not found for this booking" });
+    }
+
+    res.status(200).json({ paymentId: paymentId._id });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
