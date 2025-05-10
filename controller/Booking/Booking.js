@@ -41,7 +41,7 @@ exports.createBooking = async (req, res) => {
         return res.status(400).json({ message: `End date for property ${property.propertyId} must be after the start date.` });
       }
 
-      
+
       const overlappingBooking = await Booking.findOne({
         "properties.propertyId": property.propertyId,
         "properties.status": { $ne: "cancelled" },
@@ -457,6 +457,66 @@ exports.checkPropertyAvailability = async (req, res) => {
       propertyId,
       isBooked,
       message: isBooked ? "This property is booked during the selected period." : "This property is available.",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+exports.calculateAirbnbRevenue = async (req, res) => {
+  try {
+    const result = await Booking.aggregate([
+      { $unwind: "$properties" },
+      {
+        $match: {
+          "properties.status": "completed",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalRawRevenue: { $sum: "$properties.totalPrice" },
+        },
+      },
+    ]);
+
+    const totalRawRevenue = result[0]?.totalRawRevenue || 0;
+    const totalRevenue = parseFloat((totalRawRevenue * 0.14).toFixed(2));
+    res.status(200).json({ totalRevenue });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+exports.calculateHostRevenue = async (req, res) => {
+  try {
+    const hostId = req.user._id;
+
+    if (!hostId) {
+      return res.status(401).json({ message: "Unauthorized: Missing host ID" });
+    }
+
+    const result = await Booking.aggregate([
+      { $unwind: "$properties" },
+      {
+        $match: {
+          "properties.hostId": new mongoose.Types.ObjectId(hostId),
+          "properties.status": "completed",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$properties.totalPrice" },
+        },
+      },
+    ]);
+
+    const hostRevenue = result[0]?.totalRevenue
+      ? parseFloat(result[0].totalRevenue.toFixed(2)) : 0;
+    const airbnbFee = parseFloat((hostRevenue * 0.14).toFixed(2));
+
+    res.status(200).json({
+      hostRevenue,
+      airbnbFee,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
