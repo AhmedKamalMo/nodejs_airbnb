@@ -20,6 +20,7 @@ const {
   getBookedDatesForProperty,
   getAvailablePropertiesForDate,
   getAvailablePropertiesForDateRange,
+  checkPropertyAvailability,
 } = require("../controller/Booking/Booking");
 
 /**
@@ -440,5 +441,5 @@ router.get("/filter", [isAuthenticated, authorizeAdmin], filterBookingsByStatus)
  *       400:
  *         description: Invalid date or missing parameters
  */
-router.get("/properties/available-range", getAvailablePropertiesForDateRange);
+router.get("/properties/available-range", checkPropertyAvailability);
 module.exports = router;
