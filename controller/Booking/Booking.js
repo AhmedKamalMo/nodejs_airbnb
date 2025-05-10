@@ -86,6 +86,29 @@ exports.createBooking = async (req, res) => {
 
 exports.getAllBookings = async (req, res) => {
   try {
+    // Check if the user is an admin
+    hostId = req.user._id;
+    console.log(req.user.role);
+    console.log(hostId);
+
+
+    if (req.user.role === "Host") {
+      const hostId = req.user._id;
+
+      const bookings = await Booking.find({
+        "properties.hostId": hostId,
+      })
+        .populate("userId")
+        .populate("properties.propertyId")
+        .populate("properties.hostId");
+
+      if (!bookings.length) {
+        return res.status(404).json({ message: "No bookings found" });
+      }
+
+      return res.status(200).json(bookings);
+    }
+
     const bookings = await Booking.find()
       .populate("userId")
       .populate("properties.propertyId")
@@ -96,6 +119,8 @@ exports.getAllBookings = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
 exports.getBookingsInRange = async (req, res) => {
   try {
     const { startDate, endDate } = req.body;
@@ -136,9 +161,9 @@ exports.getBookingById = async (req, res) => {
       (property) => property.hostId && property.hostId.toString() === req.user._id.toString()
     );
 
-    if (!isHostAuthorized) {
-      return res.status(403).json({ message: "You are not authorized to view this booking" });
-    }
+    // if (!isHostAuthorized) {
+    //   return res.status(403).json({ message: "You are not authorized to view this booking" });
+    // }
 
     res.status(200).json(booking);
   } catch (error) {

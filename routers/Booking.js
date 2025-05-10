@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { isAuthenticated } = require("../middlewares/userauth");
-const { authorizeAdmin, authorizeHost } = require("../middlewares/authrization");
+const { authorizeAdmin, authorizeHost, authorizeAdminOrHost } = require("../middlewares/authrization");
 const {
   deleteBooking,
   createBooking,
@@ -48,7 +48,7 @@ const {
  *       403:
  *         description: Forbidden - Only admins can retrieve all bookings
  */
-router.get("/", [isAuthenticated, authorizeAdmin], getAllBookings);
+router.get("/", [isAuthenticated, authorizeAdminOrHost], getAllBookings);
 /**
  * @swagger
  * /bookings/properties/{propertyId}/booked-dates:

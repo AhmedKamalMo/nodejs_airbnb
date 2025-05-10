@@ -7,6 +7,9 @@ const crypto = require("crypto");
 const sendEmail = require("../../utils/sendEmail");
 const getAllUser = async (req, res, next) => {
   try {
+    if (req.user.role === "Host") {
+      res.status(200).json([]);
+    }
     const users = await usersModel.find();
     res.status(200).json(users);
   } catch (err) {

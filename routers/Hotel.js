@@ -15,6 +15,7 @@ const {
   searchHotelByCategory,
   searchHotelByPrice,
   filterAll,
+  getHostHotels,
 } = require("../controller/Hotel");
 
 /**
@@ -36,6 +37,20 @@ const {
  *         description: List of hotels
  */
 router.get("/", GetallHotel);
+/**
+ * @swagger
+ * /Hotel/hostHotel:
+ *   get:
+ *     summary: Get hotels for the authenticated host
+ *     tags: [Hotels]
+ *     description: Retrieve a list of hotels owned by the authenticated host.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of hotels owned by the host
+ */
+router.get("/hostHotel", [isAuthenticated, authorizeHost], getHostHotels);
 /**
  * @swagger
  * /Hotel/flitter:
