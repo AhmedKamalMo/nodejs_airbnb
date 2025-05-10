@@ -14,6 +14,33 @@ exports.createPayment = async (req, res) => {
 
 exports.getPayments = async (req, res) => {
     try {
+        const hostId = req.user._id;
+        if (hostId === "Host") {
+            const payments = await Payment.find()
+                .populate({
+                    path: "bookingId",
+                    populate: {
+                        path: "properties",
+                        select: "hostId",
+                    },
+                })
+                .exec();
+
+            const hostPayments = payments.filter(payment => {
+                if (!payment.bookingId || !payment.bookingId.properties) return false;
+
+                return payment.bookingId.properties.some(prop =>
+                    prop.propertyId && prop.propertyId.hostId.equals(hostId)
+                );
+            });
+
+            if (hostPayments.length === 0) {
+                return res.status(404).json({ message: "No payments found for this host." });
+            }
+
+            res.status(200).json(hostPayments);
+        }
+
         const payments = await Payment.find(req.query);
         res.json(payments);
     } catch (error) {
@@ -142,7 +169,7 @@ exports.createPayPalPayment = async (req, res) => {
                 }
             ],
             application_context: {
-                return_url: "http://localhost:3000/payment/success",
+                return_url: `http://localhost:5173/payment/success?Paymentid=${payment._id}`,
                 cancel_url: "http://localhost:3000/payment/cancel",
                 user_action: "PAY_NOW",
                 shipping_preference: "NO_SHIPPING"

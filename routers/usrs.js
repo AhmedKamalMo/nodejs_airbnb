@@ -8,7 +8,7 @@ const usersModel = require("../models/users");
 const Login = require("../controller/user/login");
 const { isAuthenticated } = require("../middlewares/userauth");
 const sendEmail = require('../utils/sendEmail');
-const { authorizeAdmin } = require("../middlewares/authrization");
+const { authorizeAdmin, authorizeAdminOrHost } = require("../middlewares/authrization");
 const{googleLogin}= require('../controller/user/Registration');
 
 
@@ -234,7 +234,7 @@ router.delete("/wishlist", isAuthenticated, removeFromWishlist);
  *       403:
  *         description: Forbidden - Only admins can access
  */
-router.get("/", [isAuthenticated, authorizeAdmin], getAllUser);
+router.get("/", [isAuthenticated, authorizeAdminOrHost], getAllUser);
 
 /**
  * @swagger

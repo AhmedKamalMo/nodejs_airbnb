@@ -3,7 +3,7 @@ const Payment = require("../models/Payment");
 const { createPayment, getPayments, getPaymentsById, updatePaymentById, deletePaymentById, paymentsSummary, createPayPalPayment, executePayPalPayment, cancelPayment, paypalReturn, paypalCancel } = require("../controller/payment");
 const router = express.Router();
 const { isAuthenticated } = require("../middlewares/userauth");
-const { authorizeAdmin } = require("../middlewares/authrization");
+const { authorizeAdmin, authorizeAdminOrHost } = require("../middlewares/authrization");
 
 /**
  * @swagger
@@ -73,7 +73,7 @@ router.post("/", [isAuthenticated, authorizeAdmin], createPayment);
  *       500:
  *         description: Internal server error
  */
-router.get("/", [isAuthenticated, authorizeAdmin], getPayments);
+router.get("/", [isAuthenticated, authorizeAdminOrHost], getPayments);
 
 /**
  * @swagger

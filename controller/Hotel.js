@@ -47,6 +47,21 @@ const GetallHotel = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const getHostHotels = async (req, res) => {
+  try {
+    const hostId = req.user._id;
+    const hotels = await hotel_Model.find({ hostId: hostId }).populate([
+      { path: "categoryId" },
+      { path: "hostId", select: "-password -__v" }
+    ]);
+    if (hotels.length === 0) {
+      return res.status(404).json({ message: "No hotels found for this host." });
+    }
+    res.status(200).json(hotels);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 const GetHotelById = async (req, res) => {
   try {
@@ -367,5 +382,6 @@ module.exports = {
   updateStatus,
   searchHotelByCategory,
   searchHotelByPrice,
-  filterAll
+  filterAll,
+  getHostHotels
 };
