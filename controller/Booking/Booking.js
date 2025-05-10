@@ -422,19 +422,20 @@ exports.getBookedDatesForProperty = async (req, res) => {
   }
 };
 
-exports.getAvailablePropertiesForDateRange = async (req, res) => {
+exports.checkPropertyAvailability = async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
+    const { startDate, endDate, propertyId } = req.query;
 
-    // التحقق من صحة التواريخ
-    if (!startDate) {
-      return res.status(400).json({ message: "Start date is required" });
+    // التحقق من وجود جميع البيانات المطلوبة
+    if (!startDate || !propertyId) {
+      return res.status(400).json({ message: "Start date and propertyId are required" });
     }
 
     const targetStartDate = new Date(startDate);
     const targetEndDate = endDate ? new Date(endDate) : new Date(startDate);
 
-    if (isNaN(targetStartDate.getTime()) || (endDate && isNaN(targetEndDate.getTime()))) {
+    // التحقق من صحة التواريخ
+    if (isNaN(targetStartDate.getTime()) || isNaN(targetEndDate.getTime())) {
       return res.status(400).json({ message: "Invalid date format" });
     }
 
@@ -442,35 +443,21 @@ exports.getAvailablePropertiesForDateRange = async (req, res) => {
       return res.status(400).json({ message: "Start date must be before or equal to end date" });
     }
 
-    // البحث عن الحجوزات النشطة التي تتداخل مع النطاق الزمني المطلوب
-    const bookedProperties = await Booking.find({
-      properties: {
-        $elemMatch: {
-          status: { $ne: "cancelled" }, // استثناء الحجوزات الملغاة
-          startDate: { $lt: targetEndDate },
-          endDate: { $gt: targetStartDate },
-        },
-      },
+    // البحث عن أي حجز نشط يتداخل مع الفترة المطلوبة لهذا العقار
+    const existingBooking = await Booking.findOne({
+      "properties.propertyId": propertyId,
+      "properties.status": { $ne: "cancelled" },
+      "properties.startDate": { $lt: targetEndDate },
+      "properties.endDate": { $gt: targetStartDate },
     });
 
-    // استخراج معرفات العقارات المحجوزة
-    const bookedPropertyIds = bookedProperties.flatMap((booking) =>
-      booking.properties
-        .filter(
-          (property) =>
-            property.status !== "cancelled" &&
-            new Date(property.startDate) < targetEndDate &&
-            new Date(property.endDate) > targetStartDate
-        )
-        .map((property) => property.propertyId.toString())
-    );
+    const isBooked = !!existingBooking;
 
-    // البحث عن العقارات غير المحجوزة
-    const availableProperties = await Hotel.find({
-      _id: { $nin: bookedPropertyIds }, // استثناء العقارات المحجوزة
+    res.status(200).json({
+      propertyId,
+      isBooked,
+      message: isBooked ? "This property is booked during the selected period." : "This property is available.",
     });
-
-    res.status(200).json({ availableProperties });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
