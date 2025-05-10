@@ -22,6 +22,7 @@ const {
   checkPropertyAvailability,
   calculateAirbnbRevenue,
   calculateHostRevenue,
+  getPaymentIdByBookingId,
 } = require("../controller/Booking/Booking");
 
 /**
@@ -231,6 +232,7 @@ router.get("/getAirbnbRevenue", [isAuthenticated, authorizeAdmin], calculateAirb
  *         description: Server error
  */
 router.get("/getHostRevenue", [isAuthenticated, authorizeHost], calculateHostRevenue);
+router.get("/getPaymentIdByBookingId", isAuthenticated, getPaymentIdByBookingId);
 
 /**
  * @swagger
