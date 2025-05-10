@@ -15,12 +15,13 @@ const {
   confirmPropertyInBooking,
   getBookingsByHost,
   getBookingsByUser,
-  calculateHostRevenue,
   filterBookingsByStatus,
   getBookedDatesForProperty,
   getAvailablePropertiesForDate,
   getAvailablePropertiesForDateRange,
   checkPropertyAvailability,
+  calculateAirbnbRevenue,
+  calculateHostRevenue,
 } = require("../controller/Booking/Booking");
 
 /**
@@ -172,6 +173,64 @@ router.post("/range", [isAuthenticated, authorizeAdmin], getBookingsInRange);
  *         description: List of bookings for the user
  */
 router.get("/user", isAuthenticated, getBookingsByUser);
+/**
+ * @swagger
+ * /bookings/getAirbnbRevenue:
+ *   get:
+ *     summary: Get total Airbnb revenue (14% of completed bookings)
+ *     tags: [Bookings]
+ *     description: Returns the total revenue that Airbnb earns (14% cut) from all completed bookings.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved Airbnb revenue
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalRevenue:
+ *                   type: number
+ *                   example: 1400.00
+ *                   description: Total revenue after applying Airbnb's 14% cut
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/getAirbnbRevenue", [isAuthenticated, authorizeAdmin], calculateAirbnbRevenue);
+/**
+ * @swagger
+ * /bookings/getHostRevenue:
+ *   get:
+ *     summary: Calculate total revenue for the authenticated host including Airbnb cut
+ *     tags: [Bookings]
+ *     description: Returns the total confirmed booking revenue and the actual amount the host receives after Airbnb's 14% fee.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Host revenue details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalRevenue:
+ *                   type: number
+ *                   example: 5000.00
+ *                   description: Total raw revenue from confirmed bookings
+ *                 hostRevenue:
+ *                   type: number
+ *                   example: 4300.00
+ *                   description: Revenue after Airbnb's 14% cut
+ *                 airbnbCutPercentage:
+ *                   type: string
+ *                   example: "14%"
+ *                   description: The percentage taken by Airbnb
+ *       500:
+ *         description: Server error
+ */
+router.get("/getHostRevenue", [isAuthenticated, authorizeHost], calculateHostRevenue);
 
 /**
  * @swagger
