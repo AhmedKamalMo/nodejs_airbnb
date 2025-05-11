@@ -23,6 +23,7 @@ const {
   calculateAirbnbRevenue,
   calculateHostRevenue,
   getPaymentIdByBookingId,
+  cancleBooking,
 } = require("../controller/Booking/Booking");
 
 /**
@@ -308,10 +309,10 @@ router.patch("/:id/properties/:propertyId/dates", isAuthenticated, updatePropert
 /**
  * @swagger
  * /bookings/{id}:
- *   delete:
- *     summary: Delete a booking
+ *   post:
+ *     summary: cancel a booking
  *     tags: [Bookings]
- *     description: Users can delete their bookings, while admin can delete any booking.
+ *     description: Users can cancel their bookings, while admin can cancel any booking.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -323,11 +324,11 @@ router.patch("/:id/properties/:propertyId/dates", isAuthenticated, updatePropert
  *         example: "65cf456e8f0d3c3b5e5f4f1e"
  *     responses:
  *       200:
- *         description: Booking deleted successfully
+ *         description: Booking cancel successfully
  *       404:
  *         description: Booking not found
  */
-router.delete("/:id", isAuthenticated, deleteBooking);
+router.post("/:id", isAuthenticated, cancelBooking);
 
 /**
  * @swagger
