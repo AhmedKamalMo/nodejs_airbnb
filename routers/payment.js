@@ -125,27 +125,6 @@ router.put("/:id", [isAuthenticated, authorizeAdmin], updatePaymentById);
 
 /**
  * @swagger
- * /payments/{id}:
- *   delete:
- *     summary: Delete a payment by ID
- *     tags: [Payments]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: The ID of the payment
- *     responses:
- *       200:
- *         description: Payment deleted successfully
- *       404:
- *         description: Payment not found
- */
-router.delete("/:id", [isAuthenticated, authorizeAdmin], deletePaymentById);
-
-/**
- * @swagger
  * /payments/{paymentId}/cancel:
  *   post:
  *     summary: Cancel a pending payment
@@ -166,6 +145,27 @@ router.delete("/:id", [isAuthenticated, authorizeAdmin], deletePaymentById);
  *         description: Payment not found
  */
 router.post("/:paymentId/cancel", isAuthenticated, cancelPayment);
+/**
+ * @swagger
+ * /payments/{id}:
+ *   delete:
+ *     summary: Delete a payment by ID
+ *     tags: [Payments]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the payment
+ *     responses:
+ *       200:
+ *         description: Payment deleted successfully
+ *       404:
+ *         description: Payment not found
+ */
+router.delete("/:id", [isAuthenticated, authorizeAdmin], deletePaymentById);
+
 
 /**
  * @swagger
