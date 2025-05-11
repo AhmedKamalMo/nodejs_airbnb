@@ -468,8 +468,11 @@ exports.checkPropertyAvailability = async (req, res) => {
     if (targetStartDate > targetEndDate) {
       return res.status(400).json({ message: "Start date must be before or equal to end date" });
     }
+    const checkProperty = await Hotel.findById(propertyId);
 
-    // البحث عن أي حجز نشط يتداخل مع الفترة المطلوبة لهذا العقار
+    if (!checkProperty) {
+      return res.status(404).json({ message: "Property not found" });
+    }
     const existingBooking = await Booking.findOne({
       "properties.propertyId": propertyId,
       "properties.status": { $ne: "cancelled" },
