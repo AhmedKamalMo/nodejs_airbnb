@@ -9,7 +9,8 @@ const Login = require("../controller/user/login");
 const { isAuthenticated } = require("../middlewares/userauth");
 const sendEmail = require('../utils/sendEmail');
 const { authorizeAdmin, authorizeAdminOrHost } = require("../middlewares/authrization");
-const{googleLogin}= require('../controller/user/Registration');
+const { googleLogin } = require('../controller/user/Registration');
+
 
 
 const {
@@ -215,6 +216,70 @@ router.post('/forgot-password', forgotPassword);
  */
 router.post('/reset-password/:token', resetPassword);
 
+/**
+ * @swagger
+ * /users/phone-signin:
+ *   post:
+ *     summary: Request OTP via WhatsApp
+ *     tags: [Users]
+ *     description: Send OTP to user's WhatsApp number
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: "01012345678"
+ *             required:
+ *               - phone
+ *     responses:
+ *       200:
+ *         description: OTP sent successfully
+ *       404:
+ *         description: Phone number not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/phone-signin', Login.requestOTP);
+
+/**
+ * @swagger
+ * /users/verify-otp:
+ *   post:
+ *     summary: Verify OTP and get token
+ *     tags: [Users]
+ *     description: Verify the OTP sent to WhatsApp and return JWT token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: "01012345678"
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *             required:
+ *               - phone
+ *               - otp
+ *     responses:
+ *       200:
+ *         description: OTP verified successfully
+ *       400:
+ *         description: Invalid or expired OTP
+ *       404:
+ *         description: Phone number not found
+ *       500:
+ *         description: Server error
+ */
+router.post('/verify-otp', Login.verifyOTP);
+
 router.delete("/wishlist", isAuthenticated, removeFromWishlist);
 
 /**
@@ -384,7 +449,7 @@ router.delete("/:id", [isAuthenticated, authorizeAdmin], deleteUserById);
  *       400:
  *         description: Bad request - Invalid credentials
  */
-router.post("/login", Login);
+router.post("/login", Login.Login);
 
-module.exports = router; 
+module.exports = router;
 // getUserProfile
