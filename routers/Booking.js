@@ -232,7 +232,7 @@ router.get("/getAirbnbRevenue", [isAuthenticated, authorizeAdmin], calculateAirb
  *         description: Server error
  */
 router.get("/getHostRevenue", [isAuthenticated, authorizeHost], calculateHostRevenue);
-router.get("/getPaymentIdByBookingId", isAuthenticated, getPaymentIdByBookingId);
+router.get("/getPaymentIdByBookingId/:bookingId", isAuthenticated, getPaymentIdByBookingId);
 
 /**
  * @swagger

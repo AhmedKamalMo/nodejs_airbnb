@@ -550,7 +550,7 @@ exports.calculateHostRevenue = async (req, res) => {
 };
 exports.getPaymentIdByBookingId = async (req, res) => {
   try {
-    const { bookingId } = req.body;
+    const { bookingId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(bookingId)) {
       return res.status(400).json({ message: "Invalid booking ID format" });
@@ -561,7 +561,7 @@ exports.getPaymentIdByBookingId = async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    const paymentId = await Payment.findOne({ bookingId: bookingId });
+    const paymentId = await Payment.findOne({ bookingId: bookingId, status: "completed" });
     console.log(paymentId);
     if (!paymentId) {
       return res.status(404).json({ message: "Payment ID not found for this booking" });
