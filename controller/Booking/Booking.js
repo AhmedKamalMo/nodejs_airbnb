@@ -219,7 +219,7 @@ exports.updatePropertyDates = async (req, res) => {
 };
 
 
-exports.deleteBooking = async (req, res) => {
+exports.cancelBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
     if (!booking) {
@@ -230,9 +230,8 @@ exports.deleteBooking = async (req, res) => {
     if (req.user.role !== "Admin" && booking.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "You are not authorized to delete this booking" });
     }
-
-    // حذف الحجز
-    await Booking.findByIdAndDelete(req.params.id);
+    booking.status = "cancelled";
+    await booking.save();
 
     res.status(200).json({ message: "Booking deleted successfully" });
   } catch (error) {
