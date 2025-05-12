@@ -29,6 +29,8 @@ const bookingSchema = new mongoose.Schema(
           required: [true, "Start date is required"],
           validate: {
             validator: function (value) {
+              // Skip validation if the booking is being cancelled
+              if (this.status === 'cancelled') return true;
               return value >= Date.now();
             },
             message: "Start date must be in the future",
@@ -39,6 +41,8 @@ const bookingSchema = new mongoose.Schema(
           required: [true, "End date is required"],
           validate: {
             validator: function (value) {
+              // Skip validation if the booking is being cancelled
+              if (this.status === 'cancelled') return true;
               return this.startDate && value > this.startDate;
             },
             message: "End date must be after the start date",
