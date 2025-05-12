@@ -181,7 +181,9 @@ exports.updatePropertyDates = async (req, res) => {
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
-
+    if (!startDate || !endDate || !totalPrice) {
+      return res.status(400).json({ message: "Start date, end date, and total price are required" });
+    }
     // العثور على العقار داخل الحجز
     const propertyToUpdate = booking.properties.find(
       (property) => property.propertyId.toString() === propertyId
