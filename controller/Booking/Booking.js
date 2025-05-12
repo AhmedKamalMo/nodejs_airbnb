@@ -175,14 +175,14 @@ exports.getBookingById = async (req, res) => {
 exports.updatePropertyDates = async (req, res) => {
   try {
     const { bookingId, propertyId } = req.params;
-    const { startDate, endDate, totalPrice } = req.body;
+    const { startDate, endDate } = req.body;
 
     const booking = await Booking.findById(bookingId);
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
-    if (!startDate || !endDate || !totalPrice) {
-      return res.status(400).json({ message: "Start date, end date, and total price are required" });
+    if (!startDate || !endDate) {
+      return res.status(400).json({ message: "Start date, end date are required" });
     }
     console.log(endDate - startDate);
     if (endDate - startDate < 0) {
@@ -214,14 +214,11 @@ exports.updatePropertyDates = async (req, res) => {
     if (overlappingBooking) {
       return res.status(400).json({ message: "New dates conflict with an existing booking." });
     }
-    if ((endDate - startDate+1) * propertyToUpdate.price !== totalPrice) {
-      return res.status(400).json({ message: "Total price does not match the new dates." });
-    }
-    
     // تحديث التواريخ
     propertyToUpdate.startDate = startDate;
     propertyToUpdate.endDate = endDate;
-    propertyToUpdate.totalPrice = totalPrice;
+    propertyToUpdate.totalPrice = ((endDate - startDate + 1) * propertyToUpdate.price).toFixed(2);
+    propertyToUpdate.serviceFee = ((endDate - startDate + 1) * propertyToUpdate.serviceFee).toFixed(2) * 0.14;
     await booking.save();
 
     res.status(200).json({ message: "Property dates updated successfully", booking });
