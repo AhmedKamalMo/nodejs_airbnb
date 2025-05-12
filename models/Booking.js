@@ -96,7 +96,7 @@ bookingSchema.pre("save", async function (next) {
   try {
 
     for (const property of this.properties) {
-      if (property.status === "cancelled") continue; 
+      if (property.status === "cancelled") continue;
 
       const conflictingBooking = await mongoose.model("Booking").findOne({
         _id: { $ne: this._id },

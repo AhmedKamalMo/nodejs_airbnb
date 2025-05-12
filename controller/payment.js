@@ -229,15 +229,15 @@ exports.createPayPalPayment = async (req, res) => {
                 {
                     amount: {
                         currency_code: "USD",
-                        value: totalAmount.toString(),
+                        value: totalAmount.toFixed(2),
                         breakdown: {
                             item_total: {
                                 currency_code: "USD",
-                                value: amount.toString()
+                                value: amount.toFixed(2)
                             },
                             tax_total: {
                                 currency_code: "USD",
-                                value: taxAmount.toString()
+                                value: taxAmount.toFixed(2)
                             }
                         }
                     }
