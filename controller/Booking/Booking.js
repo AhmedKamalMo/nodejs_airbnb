@@ -175,7 +175,7 @@ exports.getBookingById = async (req, res) => {
 exports.updatePropertyDates = async (req, res) => {
   try {
     const { bookingId, propertyId } = req.params;
-    const { startDate, endDate } = req.body;
+    const { startDate, endDate, totalPrice } = req.body;
 
     const booking = await Booking.findById(bookingId);
     if (!booking) {
@@ -209,7 +209,7 @@ exports.updatePropertyDates = async (req, res) => {
     // تحديث التواريخ
     propertyToUpdate.startDate = startDate;
     propertyToUpdate.endDate = endDate;
-
+    propertyToUpdate.totalPrice = totalPrice;
     await booking.save();
 
     res.status(200).json({ message: "Property dates updated successfully", booking });

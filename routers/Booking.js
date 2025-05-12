@@ -304,7 +304,7 @@ router.get("/:id", isAuthenticated, getBookingById);
  *       404:
  *         description: Booking or property not found
  */
-router.patch("/:id/properties/:propertyId/dates", isAuthenticated, updatePropertyDates);
+router.patch("/:bookingId/properties/:propertyId/dates", isAuthenticated, updatePropertyDates);
 
 /**
  * @swagger
