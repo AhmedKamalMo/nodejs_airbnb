@@ -184,6 +184,13 @@ exports.updatePropertyDates = async (req, res) => {
     if (!startDate || !endDate || !totalPrice) {
       return res.status(400).json({ message: "Start date, end date, and total price are required" });
     }
+    console.log(endDate - startDate);
+    if (endDate - startDate < 0) {
+      return res.status(400).json({ message: "End date must be after start date" });
+    }
+    console.log("total days", endDate - startDate);
+
+
     // العثور على العقار داخل الحجز
     const propertyToUpdate = booking.properties.find(
       (property) => property.propertyId.toString() === propertyId
@@ -207,7 +214,10 @@ exports.updatePropertyDates = async (req, res) => {
     if (overlappingBooking) {
       return res.status(400).json({ message: "New dates conflict with an existing booking." });
     }
-
+    if ((endDate - startDate) * propertyToUpdate.price !== totalPrice) {
+      return res.status(400).json({ message: "Total price does not match the new dates." });
+    }
+    
     // تحديث التواريخ
     propertyToUpdate.startDate = startDate;
     propertyToUpdate.endDate = endDate;
