@@ -214,7 +214,7 @@ exports.updatePropertyDates = async (req, res) => {
     if (overlappingBooking) {
       return res.status(400).json({ message: "New dates conflict with an existing booking." });
     }
-    if ((endDate - startDate) * propertyToUpdate.price !== totalPrice) {
+    if ((endDate - startDate+1) * propertyToUpdate.price !== totalPrice) {
       return res.status(400).json({ message: "Total price does not match the new dates." });
     }
     
