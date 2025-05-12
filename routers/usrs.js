@@ -325,7 +325,7 @@ router.get("/", [isAuthenticated, authorizeAdminOrHost], getAllUser);
  *       403:
  *         description: Forbidden - Only admins can access
  */
-router.get("/:id", [isAuthenticated, authorizeAdmin], getUserById);
+router.get("/:id", [isAuthenticated, authorizeAdminOrHost], getUserById);
 
 /**
  * @swagger

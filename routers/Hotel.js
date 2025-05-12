@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { isAuthenticated } = require("../middlewares/userauth");
-const { authorizeAdmin, authorizeHost } = require("../middlewares/authrization");
+const { authorizeAdmin, authorizeHost, authorizeAdminOrHost } = require("../middlewares/authrization");
 
 const {
   addHotel,
@@ -50,7 +50,7 @@ router.get("/", GetallHotel);
  *       200:
  *         description: List of hotels owned by the host
  */
-router.get("/hostHotel", [isAuthenticated, authorizeHost], getHostHotels);
+router.get("/hostHotel", [isAuthenticated, authorizeAdminOrHost], getHostHotels);
 /**
  * @swagger
  * /Hotel/flitter:

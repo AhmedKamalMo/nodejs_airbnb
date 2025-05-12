@@ -216,7 +216,7 @@ router.delete("/:id", [isAuthenticated, authorizeAdmin], deletePaymentById);
  *       500:
  *         description: Server error
  */
-router.get("/payment/summary", [isAuthenticated, authorizeAdmin], paymentsSummary);
+router.get("/payment/summary", [isAuthenticated, authorizeAdminOrHost], paymentsSummary);
 
 router.post("/create-paypal-payment", [isAuthenticated], createPayPalPayment);
 router.post("/execute-paypal-payment", [isAuthenticated], executePayPalPayment);

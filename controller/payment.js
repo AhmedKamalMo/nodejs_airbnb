@@ -1,7 +1,7 @@
 const Payment = require("../models/Payment");
 const Booking = require("../models/Booking");
 const checkoutNodeJssdk = require("@paypal/checkout-server-sdk");
-
+const mongoose = require("mongoose");
 exports.createPayment = async (req, res) => {
     try {
         const payment = new Payment(req.body);
@@ -15,38 +15,62 @@ exports.createPayment = async (req, res) => {
 exports.getPayments = async (req, res) => {
     try {
         const hostId = req.user._id;
-        if (hostId === "Host") {
-            const payments = await Payment.find()
-                .populate({
-                    path: "bookingId",
-                    populate: {
-                        path: "properties",
-                        select: "hostId",
-                    },
-                })
-                .exec();
 
-            const hostPayments = payments.filter(payment => {
-                if (!payment.bookingId || !payment.bookingId.properties) return false;
+        if (req.user.role === "Host") {
+            const payments = await Payment.aggregate([
+                // ربط المدفوعات بالحجز
+                {
+                    $lookup: {
+                        from: "bookings",         // اسم collection bookings
+                        localField: "bookingId",
+                        foreignField: "_id",
+                        as: "bookingDetails"
+                    }
+                },
+                { $unwind: "$bookingDetails" }, // نجعل bookingDetails كائن وليس array
 
-                return payment.bookingId.properties.some(prop =>
-                    prop.propertyId && prop.propertyId.hostId.equals(hostId)
-                );
-            });
+                // ربط الحجز بالعقارات
+                {
+                    $lookup: {
+                        from: "hotels",           // اسم collection hotels
+                        localField: "bookingDetails.properties.propertyId",
+                        foreignField: "_id",
+                        as: "hotelDetails"
+                    }
+                },
+                { $unwind: "$hotelDetails" }, // نجعل hotelDetails كائن
 
-            if (hostPayments.length === 0) {
+                // التأكد أن العقار يعود للمستخدم الحالي
+                {
+                    $match: {
+                        "hotelDetails.hostId": new mongoose.Types.ObjectId(hostId)
+                    }
+                },
+
+                // (اختياري) إزالة بيانات غير ضرورية من الاستجابة
+                {
+                    $project: {
+                        bookingDetails: 0,
+                        hotelDetails: 0
+                    }
+                }
+            ]);
+
+            if (!payments.length) {
                 return res.status(404).json({ message: "No payments found for this host." });
             }
 
-            res.status(200).json(hostPayments);
+            return res.status(200).json(payments);
         }
 
+        // إذا لم يكن Host، نرسل كل المدفوعات حسب الفلاتر
         const payments = await Payment.find(req.query);
-        res.json(payments);
+        return res.json(payments);
+
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
-}
+};
 
 exports.getPaymentsById = async (req, res) => {
     try {
@@ -79,34 +103,85 @@ exports.deletePaymentById = async (req, res) => {
 }
 
 exports.paymentsSummary = async (req, res) => {
-
     try {
-        const totalPayments = await Payment.countDocuments();
-        const completedPayments = await Payment.countDocuments({ status: "completed" });
-        const pendingPayments = await Payment.countDocuments({ status: "pending" });
-        const failedPayments = await Payment.countDocuments({ status: "failed" });
-        const refundedPayments = await Payment.countDocuments({ status: "refunded" });
+        const { role, _id: userId } = req.user;
 
-        const totalAmount = await Payment.aggregate([{ $group: { _id: null, total: { $sum: "$amount" } } }]);
-        const completedAmount = await Payment.aggregate([{ $match: { status: "completed" } }, { $group: { _id: null, total: { $sum: "$amount" } } }]);
-        const pendingAmount = await Payment.aggregate([{ $match: { status: "pending" } }, { $group: { _id: null, total: { $sum: "$amount" } } }]);
-        const refundedAmount = await Payment.aggregate([{ $match: { status: "refunded" } }, { $group: { _id: null, total: { $sum: "$amount" } } }]);
-        console.log(refundedAmount + " " + pendingAmount + " " + pendingAmount + " " + refundedAmount)
-        res.json({
-            totalPayments,
-            completedPayments,
-            pendingPayments,
-            failedPayments,
-            refundedPayments,
-            totalAmount: totalAmount[0]?.total || 0,
-            completedAmount: completedAmount[0]?.total || 0,
-            pendingAmount: pendingAmount[0]?.total || 0,
-            refundedAmount: refundedAmount[0]?.total || 0,
+        let matchStage = {};
+
+        if (role === "Host") {
+            // جلب جميع الحجوزات مع تعبئة بيانات العقارات
+            const hostBookings = await Booking.find().populate({
+                path: "properties",
+                select: "hostId"
+            }).exec();
+
+            // التأكد من أن البيانات موجودة قبل الوصول إليها
+            const validHostBookingIds = hostBookings
+                .filter(booking => {
+                    return booking.properties?.hostId?.toString() === userId.toString();
+                })
+                .map(booking => booking._id);
+
+            matchStage = { bookingId: { $in: validHostBookingIds } };
+        } else if (role !== "Admin") {
+            return res.status(403).json({
+                message: "Access denied. Only admins and hosts can view payment summaries."
+            });
+        }
+
+        // جلب إحصائيات المدفوعات حسب الحالة
+        const statusCounts = await Payment.aggregate([
+            { $match: matchStage },
+            {
+                $group: {
+                    _id: "$status",
+                    count: { $sum: 1 },
+                    amount: { $sum: "$amount" }
+                }
+            }
+        ]);
+
+        const summary = {
+            totalPayments: 0,
+            completedPayments: 0,
+            pendingPayments: 0,
+            failedPayments: 0,
+            refundedPayments: 0,
+            totalAmount: 0,
+            completedAmount: 0,
+            pendingAmount: 0,
+            refundedAmount: 0
+        };
+
+        statusCounts.forEach(({ _id: status, count, amount }) => {
+            summary.totalPayments += count;
+            summary.totalAmount += amount;
+
+            switch (status) {
+                case "completed":
+                    summary.completedPayments = count;
+                    summary.completedAmount = amount;
+                    break;
+                case "pending":
+                    summary.pendingPayments = count;
+                    summary.pendingAmount = amount;
+                    break;
+                case "failed":
+                    summary.failedPayments = count;
+                    break;
+                case "refunded":
+                    summary.refundedPayments = count;
+                    summary.refundedAmount = amount;
+                    break;
+            }
         });
+
+        res.json(summary);
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
-}
+};
 
 
 //* paypal ------------------------------------------------------------------------------------------------------------------
