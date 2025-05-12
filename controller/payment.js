@@ -375,6 +375,35 @@ exports.cancelPayment = async (req, res) => {
             });
         }
 
+        // Find the associated booking to calculate refund
+        const bookingDetails = await Booking.findById(payment.bookingId);
+        if (!bookingDetails) {
+            return res.status(404).json({ message: "Associated booking not found" });
+        }
+
+        // Validate booking has properties
+        if (!bookingDetails.properties || bookingDetails.properties.length === 0) {
+            return res.status(400).json({ message: "No properties found in booking" });
+        }
+
+        // Calculate refund amount based on remaining days
+        const now = new Date();
+        const checkIn = new Date(bookingDetails.properties[0].startDate);
+        const checkOut = new Date(bookingDetails.properties[0].endDate);
+        
+        // Validate dates
+        if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
+            return res.status(400).json({ message: "Invalid booking dates" });
+        }
+        
+        const totalDays = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+        const remainingDays = Math.ceil((checkOut - now) / (1000 * 60 * 60 * 24));
+        
+        // If the check-in date hasn't passed, refund the full amount
+        // If check-in date has passed, calculate refund based on remaining days
+        const refundPercentage = now < checkIn ? 1 : Math.max(0, remainingDays / totalDays);
+        const refundAmount = payment.amount * refundPercentage;
+
         // If payment was completed and has a PayPal transaction, process refund
         if (payment.status === "completed" && payment.transactionId && payment.paymentMethod === "paypal") {
             try {
@@ -383,9 +412,9 @@ exports.cancelPayment = async (req, res) => {
                 request.requestBody({
                     amount: {
                         currency_code: "USD",
-                        value: payment.amount.toString()
+                        value: refundAmount.toFixed(2)
                     },
-                    note_to_payer: "Refund for cancelled booking"
+                    note_to_payer: `Refund for cancelled booking (${Math.round(refundPercentage * 100)}% of original payment)`
                 });
 
                 // Process the refund
@@ -394,6 +423,8 @@ exports.cancelPayment = async (req, res) => {
 
                 if (refundResponse.result.status === "COMPLETED") {
                     payment.status = "refunded";
+                    payment.refundAmount = refundAmount;
+                    payment.refundDate = new Date();
                 } else {
                     return res.status(400).json({
                         message: "Failed to process refund",
@@ -412,26 +443,24 @@ exports.cancelPayment = async (req, res) => {
             payment.status = "cancelled";
         }
 
-        await payment.save();
+        // Update the booking status first
+        await Booking.updateOne(
+            { _id: payment.bookingId },
+            { $set: { "properties.$[].status": "cancelled" } }
+        );
 
-        // Update the associated booking status
-        const booking = await Booking.findById(payment.bookingId);
-        if (booking) {
-            booking.properties.forEach(property => {
-                if (["pending", "completed"].includes(property.status)) {
-                    property.status = "cancelled";
-                }
-            });
-            await booking.save();
-        }
+        // Save payment after booking is updated
+        await payment.save();
 
         res.json({
             message: payment.status === "refunded" ?
-                "Payment refunded successfully" :
+                `Payment refunded successfully (${Math.round(refundPercentage * 100)}% of original payment)` :
                 "Payment cancelled successfully",
             paymentId: payment._id,
             status: payment.status,
-            bookingStatus: "cancelled"
+            bookingStatus: "cancelled",
+            refundAmount: refundAmount.toFixed(2),
+            refundPercentage: Math.round(refundPercentage * 100)
         });
     } catch (error) {
         console.error("Cancel/Refund payment error:", error);
