@@ -63,7 +63,7 @@ exports.createBooking = async (req, res) => {
         startDate: property.startDate,
         endDate: property.endDate,
         price: property.price,
-        serviceFee: property.serviceFee,
+        serviceFee: (property.price * .14).toFixed(2),
         taxes: property.taxes,
         totalPrice: property.totalPrice,
         paymentMethod: property.paymentMethod,
@@ -191,8 +191,8 @@ exports.updatePropertyDates = async (req, res) => {
       return res.status(400).json({ message: "Invalid date format" });
     }
 
-    const timeDifference = end - start; 
-    const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24)); 
+    const timeDifference = end - start;
+    const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
 
     console.log("Days difference:", daysDifference);
 
