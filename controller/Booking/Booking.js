@@ -184,14 +184,18 @@ exports.updatePropertyDates = async (req, res) => {
     if (!startDate || !endDate) {
       return res.status(400).json({ message: "Start date, end date are required" });
     }
-    console.log(endDate - startDate);
-    if (endDate - startDate < 0) {
-      return res.status(400).json({ message: "End date must be after start date" });
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start) || isNaN(end)) {
+      return res.status(400).json({ message: "Invalid date format" });
     }
-    console.log("total days", endDate - startDate);
 
+    const timeDifference = end - start; 
+    const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24)); 
 
-    // العثور على العقار داخل الحجز
+    console.log("Days difference:", daysDifference);
+
     const propertyToUpdate = booking.properties.find(
       (property) => property.propertyId.toString() === propertyId
     );
@@ -217,9 +221,9 @@ exports.updatePropertyDates = async (req, res) => {
     // تحديث التواريخ
     propertyToUpdate.startDate = startDate;
     propertyToUpdate.endDate = endDate;
-    propertyToUpdate.totalPrice = ((endDate - startDate + 1) * propertyToUpdate.price).toFixed(2);
-    propertyToUpdate.serviceFee = ((endDate - startDate + 1) * propertyToUpdate.serviceFee).toFixed(2) * 0.14;
-    await booking.save();
+    propertyToUpdate.totalPrice = (daysDifference * propertyToUpdate.price).toFixed(2);
+    propertyToUpdate.serviceFee = (daysDifference * propertyToUpdate.serviceFee).toFixed(2) * 0.14;
+    await booking.save();a
 
     res.status(200).json({ message: "Property dates updated successfully", booking });
   } catch (error) {
