@@ -222,8 +222,8 @@ exports.updatePropertyDates = async (req, res) => {
     propertyToUpdate.startDate = startDate;
     propertyToUpdate.endDate = endDate;
     propertyToUpdate.totalPrice = (daysDifference * propertyToUpdate.price).toFixed(2);
-    propertyToUpdate.serviceFee = (daysDifference * propertyToUpdate.serviceFee).toFixed(2) * 0.14;
-    await booking.save();a
+    propertyToUpdate.serviceFee = (daysDifference * propertyToUpdate.price).toFixed(2) * 0.14;
+    await booking.save();
 
     res.status(200).json({ message: "Property dates updated successfully", booking });
   } catch (error) {
