@@ -65,7 +65,7 @@ exports.createBooking = async (req, res) => {
         price: property.price,
         serviceFee: property.serviceFee,
         taxes: property.taxes,
-        totalPrice: property.totalPrice.toFixed(2),
+        totalPrice: property.totalPrice,
         paymentMethod: property.paymentMethod,
         companions: property.companions,
         petsAllowed: property.petsAllowed,
