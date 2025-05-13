@@ -43,9 +43,8 @@ exports.requestOTP = async (req, res) => {
     const { phone } = req.body;
 
     // Find user by phone number
-    const user = await usersModel.findOne({ phone });
-    if (!user) {
-      return res.status(404).json({ message: 'Phone number not found' });
+    if (phone.length < 10) {
+      return res.status(400).json({ message: 'Invalid phone number', isError: true });
     }
 
     // Generate 6-digit OTP
@@ -62,12 +61,14 @@ exports.requestOTP = async (req, res) => {
 
     if (!whatsappSent) {
       return res.status(500).json({
-        message: 'Failed to send WhatsApp message. Make sure you have scanned the QR code and the WhatsApp client is ready.'
+        message: 'Failed to send WhatsApp message. Make sure you have scanned the QR code and the WhatsApp client is ready.',
+        isError: true
       });
     }
 
     res.json({
-      message: 'OTP sent successfully via WhatsApp'
+      message: 'OTP sent successfully via WhatsApp',
+      isError: false
     });
   } catch (error) {
     console.error('Phone signin error:', error);
