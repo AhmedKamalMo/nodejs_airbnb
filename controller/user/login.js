@@ -42,8 +42,7 @@ exports.requestOTP = async (req, res) => {
   try {
     const { phone } = req.body;
 
-    // Find user by phone number
-    if (phone.length < 10) {
+    if (!phone.length == 11) {
       return res.status(400).json({ message: 'Invalid phone number', isError: true });
     }
 
