@@ -82,19 +82,19 @@ exports.verifyOTP = async (req, res) => {
     // Check if OTP exists and is valid
     const storedOTP = otpStore.get(phone);
     if (!storedOTP || storedOTP.code !== otp) {
-      return res.status(400).json({ message: 'Invalid OTP' });
+      return res.status(400).json({ message: 'Invalid OTP' , isError: true });
     }
 
     // Check if OTP is expired
     if (Date.now() > storedOTP.expiry) {
       otpStore.delete(phone);
-      return res.status(400).json({ message: 'OTP expired' });
+      return res.status(400).json({ message: 'OTP expired', isError: true });
     }
 
     // Find user by phone
     const user = await usersModel.findOne({ phone });
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found', isError: true });
     }
 
     // Generate JWT token
@@ -110,6 +110,7 @@ exports.verifyOTP = async (req, res) => {
     res.json({
       message: 'OTP verified successfully',
       token,
+      isError: false
     });
   } catch (error) {
     console.error('OTP verification error:', error);
