@@ -41,8 +41,8 @@ exports.Login = async (req, res) => {
 exports.requestOTP = async (req, res) => {
   try {
     const { phone } = req.body;
-console.log(phone.length)
-    if (!(phone.length == 11) ) {
+    console.log(phone.length)
+    if (/^(01)(0|1|2|5)\d{8}$/.test(phone) === false) {
       return res.status(400).json({ message: 'Invalid phone number', isError: true });
     }
 
@@ -82,7 +82,7 @@ exports.verifyOTP = async (req, res) => {
     // Check if OTP exists and is valid
     const storedOTP = otpStore.get(phone);
     if (!storedOTP || storedOTP.code !== otp) {
-      return res.status(400).json({ message: 'Invalid OTP' , isError: true });
+      return res.status(400).json({ message: 'Invalid OTP', isError: true });
     }
 
     // Check if OTP is expired

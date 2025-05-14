@@ -9,7 +9,7 @@ const Login = require("../controller/user/login");
 const { isAuthenticated } = require("../middlewares/userauth");
 const sendEmail = require('../utils/sendEmail');
 const { authorizeAdmin, authorizeAdminOrHost } = require("../middlewares/authrization");
-const { googleLogin } = require('../controller/user/Registration');
+const { googleLogin, Registration } = require('../controller/user/Registration');
 
 
 
@@ -359,6 +359,7 @@ router.get("/:id", [isAuthenticated, authorizeAdminOrHost], getUserById);
 // ghada////
 // router.post("/register", Registration);
 router.post('/google', googleLogin);
+router.post('/register', Registration);
 ///ghada/////
 /**
  * @swagger

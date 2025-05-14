@@ -86,20 +86,6 @@ const bcrypt = require("bcryptjs");
 const userSchema = new mongoose.Schema({
     resetPasswordToken: String,
     resetPasswordExpire: Date,
-    firstName: {
-    type: String,
-    required: false,
-    trim: true,
-    minlength: 2,
-    maxlength: 50,
-  },
-  lastName: {
-    type: String,
-    required: false,
-    trim: true,
-    minlength: 2,
-    maxlength: 50,
-  },
   email: {
     type: String,
     required: false,
@@ -114,7 +100,6 @@ const userSchema = new mongoose.Schema({
     required: false,
     match: [/^(01)(0|1|2|5)\d{8}$/, "Invalid phone number"],
   },
-  profileImage: { type: String, trim: true },
   dateOfBirth: {
     type: Date,
     required: false,
@@ -132,7 +117,6 @@ const userSchema = new mongoose.Schema({
     city: { type: String, required: false, trim: true },
   },
   name: String,
-  email: { type: String, required: true, unique: true },
   googleId: String,
   avatar: String,
   isGoogleUser: { type: Boolean, default: false },
