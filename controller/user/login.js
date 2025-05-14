@@ -41,8 +41,8 @@ exports.Login = async (req, res) => {
 exports.requestOTP = async (req, res) => {
   try {
     const { phone } = req.body;
-
-    if (!phone.length == 11) {
+console.log(phone.length)
+    if (!(phone.length == 11) ) {
       return res.status(400).json({ message: 'Invalid phone number', isError: true });
     }
 
