@@ -42,7 +42,10 @@ const editUserById = async (req, res) => {
   const userId = req.user._id;
 
   try {
-    if (id !== userId.toString()) {
+    console.log("userId", userId);
+    console.log("role", req.user.role);
+    if (userId.toString() !== id && req.user.role !== "Admin") {
+
       return res.status(403).json({ message: "You are not authorized to edit this user" });
     }
     const updatedUser = await usersModel.findByIdAndUpdate(
