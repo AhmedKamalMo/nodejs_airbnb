@@ -9,9 +9,9 @@
 const Registration = async (req, res) => {
 
   try {
-    const { name, email, dateOfBirth } = req.body;
+    const { name, email, dateOfBirth,phone } = req.body;
 
-    if (!name || !email || !dateOfBirth) {
+    if (!name || !email || !dateOfBirth|| !phone) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
