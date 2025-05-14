@@ -124,7 +124,7 @@ const userSchema = new mongoose.Schema({
     maxlength: 50,
   },
   googleId: String,
-  avatar: String,
+  avatar: {type: String, trim: true, default: "https://www.svgrepo.com/show/483464/person.svg"},
   isGoogleUser: { type: Boolean, default: false },
   role: { type: String, enum: ["Guest", "Host", "Admin"], default: "Guest" },
     hostDetails: {
