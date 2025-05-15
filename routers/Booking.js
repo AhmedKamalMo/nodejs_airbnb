@@ -177,7 +177,7 @@ router.post("/range", [isAuthenticated, authorizeAdmin], getBookingsInRange);
 router.get("/user", isAuthenticated, getBookingsByUser);
 /**
  * @swagger
- * /bookings/getAirbnbRevenue:
+ * /bookings/getRevenue:
  *   get:
  *     summary: Get total Airbnb revenue (14% of completed bookings)
  *     tags: [Bookings]
@@ -199,7 +199,7 @@ router.get("/user", isAuthenticated, getBookingsByUser);
  *       500:
  *         description: Internal server error
  */
-router.get("/getAirbnbRevenue", [isAuthenticated, authorizeAdmin], calculateAirbnbRevenue);
+router.get("/getRevenue", [isAuthenticated, authorizeAdminOrHost], calculateAirbnbRevenue);
 /**
  * @swagger
  * /bookings/getHostRevenue:

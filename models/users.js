@@ -98,6 +98,7 @@ const userSchema = new mongoose.Schema({
   phone: {
     type: String,
     required: false,
+    unique: true,
     match: [/^(01)(0|1|2|5)\d{8}$/, "Invalid phone number"],
   },
   dateOfBirth: {

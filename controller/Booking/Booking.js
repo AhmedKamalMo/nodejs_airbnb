@@ -505,60 +505,64 @@ exports.checkPropertyAvailability = async (req, res) => {
 };
 exports.calculateAirbnbRevenue = async (req, res) => {
   try {
-    const result = await Booking.aggregate([
-      { $unwind: "$properties" },
-      {
-        $match: {
-          "properties.status": "completed",
+    if (req.user.role == "Admin") {
+      const result = await Booking.aggregate([
+        { $unwind: "$properties" },
+        {
+          $match: {
+            "properties.status": "completed",
+          },
         },
-      },
-      {
-        $group: {
-          _id: null,
-          totalRawRevenue: { $sum: "$properties.totalPrice" },
+        {
+          $group: {
+            _id: null,
+            totalRawRevenue: { $sum: "$properties.totalPrice" },
+          },
         },
-      },
-    ]);
+      ]);
 
-    const totalRawRevenue = result[0]?.totalRawRevenue || 0;
-    const totalRevenue = parseFloat((totalRawRevenue * 0.14).toFixed(2));
-    res.status(200).json({ totalRevenue });
+      const totalRawRevenue = result[0]?.totalRawRevenue || 0;
+      const totalRevenue = parseFloat((totalRawRevenue * 0.14).toFixed(2));
+      res.status(200).json({ totalRevenue });
+    }
+    else {
+      const hostId = req.user._id;
+
+      if (!hostId) {
+        return res.status(401).json({ message: "Unauthorized: Missing host ID" });
+      }
+
+      const result = await Booking.aggregate([
+        { $unwind: "$properties" },
+        {
+          $match: {
+            "properties.hostId": new mongoose.Types.ObjectId(hostId),
+            "properties.status": "completed",
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: "$properties.totalPrice" },
+          },
+        },
+      ]);
+
+      const hostRevenue = result[0]?.totalRevenue
+        ? parseFloat(result[0].totalRevenue.toFixed(2)) : 0;
+      const airbnbFee = parseFloat((hostRevenue * 0.14).toFixed(2));
+
+      res.status(200).json({
+        totalRevenue:hostRevenue,
+      });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 exports.calculateHostRevenue = async (req, res) => {
   try {
-    const hostId = req.user._id;
 
-    if (!hostId) {
-      return res.status(401).json({ message: "Unauthorized: Missing host ID" });
-    }
-
-    const result = await Booking.aggregate([
-      { $unwind: "$properties" },
-      {
-        $match: {
-          "properties.hostId": new mongoose.Types.ObjectId(hostId),
-          "properties.status": "completed",
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          totalRevenue: { $sum: "$properties.totalPrice" },
-        },
-      },
-    ]);
-
-    const hostRevenue = result[0]?.totalRevenue
-      ? parseFloat(result[0].totalRevenue.toFixed(2)) : 0;
-    const airbnbFee = parseFloat((hostRevenue * 0.14).toFixed(2));
-
-    res.status(200).json({
-      hostRevenue,
-      airbnbFee,
-    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
