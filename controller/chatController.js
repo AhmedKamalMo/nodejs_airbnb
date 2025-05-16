@@ -333,17 +333,17 @@ exports.getAllConversations = asyncHandler(async (req, res) => {
         { 
             path: 'lastMessage.sender',
             model: 'User',
-            select: 'name email profilePicture'
+            select: 'name email avatar _id'
         },
         { 
             path: 'lastMessage.receiver',
             model: 'User',
-            select: 'name email profilePicture'
+            select: 'name email avatar _id'
         },
         { 
             path: '_id',
             model: 'User',
-            select: 'name email profilePicture'
+            select: 'name email avatar _id'
         }
     ]);
 
