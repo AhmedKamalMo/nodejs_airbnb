@@ -295,8 +295,8 @@ exports.getAllConversations = asyncHandler(async (req, res) => {
     const conversations = await Message.aggregate([
         {
             $match: {
-                $or: [{ sender: mongoose.Types.ObjectId(userId) }, 
-                      { receiver: mongoose.Types.ObjectId(userId) }]
+                $or: [{ sender: new mongoose.Types.ObjectId(userId) }, 
+                      { receiver: new mongoose.Types.ObjectId(userId) }]
             }
         },
         {
@@ -306,7 +306,7 @@ exports.getAllConversations = asyncHandler(async (req, res) => {
             $group: {
                 _id: {
                     $cond: [
-                        { $eq: ['$sender', mongoose.Types.ObjectId(userId)] },
+                        { $eq: ['$sender', new mongoose.Types.ObjectId(userId)] },
                         '$receiver',
                         '$sender'
                     ]
@@ -316,7 +316,7 @@ exports.getAllConversations = asyncHandler(async (req, res) => {
                     $sum: {
                         $cond: [
                             { $and: [
-                                { $eq: ['$receiver', mongoose.Types.ObjectId(userId)] },
+                                { $eq: ['$receiver', new mongoose.Types.ObjectId(userId)] },
                                 { $eq: ['$read', false] }
                             ]},
                             1,
@@ -328,11 +328,23 @@ exports.getAllConversations = asyncHandler(async (req, res) => {
         }
     ]);
 
-    // Populate user details
+    // Populate user details with proper model references
     const populatedConversations = await Message.populate(conversations, [
-        { path: 'lastMessage.sender' },
-        { path: 'lastMessage.receiver' },
-        { path: '_id' }
+        { 
+            path: 'lastMessage.sender',
+            model: 'User',
+            select: 'name email profilePicture'
+        },
+        { 
+            path: 'lastMessage.receiver',
+            model: 'User',
+            select: 'name email profilePicture'
+        },
+        { 
+            path: '_id',
+            model: 'User',
+            select: 'name email profilePicture'
+        }
     ]);
 
     res.status(200).json({
