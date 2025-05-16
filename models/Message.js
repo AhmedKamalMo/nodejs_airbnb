@@ -86,5 +86,16 @@ messageSchema.index({ sender: 1, receiver: 1 });
 messageSchema.index({ receiver: 1, read: 1 });
 messageSchema.index({ content: 'text' });
 
+// Add a pre-find middleware to always populate sender and receiver
+messageSchema.pre('find', function() {
+    this.populate({
+        path: 'sender',
+        select: 'name email profilePicture'
+    }).populate({
+        path: 'receiver',
+        select: 'name email profilePicture'
+    });
+});
+
 const Message = mongoose.model('Message', messageSchema);
 module.exports = Message;

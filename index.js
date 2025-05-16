@@ -69,7 +69,7 @@ app.use("/Bookings", Booking);
 app.use("/reviews", reviewRoutes);
 app.use("/payments", paymentRoutes);
 app.use("/amenities",amenities);
-app.use('/api/chat', chatRoutes);
+app.use('/chat', chatRoutes);
 // Global error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
