@@ -20,7 +20,8 @@ const {
     removeFromGroup,
     // User Status
     updateUserStatus,
-    getOnlineUsers
+    getOnlineUsers,
+    pusherAuth
 } = require('../controller/chatController');
 const { isAuthenticated } = require('../middlewares/userauth');
 
@@ -30,7 +31,6 @@ const router = express.Router();
 router.post('/messages', isAuthenticated, sendMessage);
 router.get('/conversations/:userId', isAuthenticated, getConversation);
 router.get('/conversations', isAuthenticated, getAllConversations);
-
 // Message Management
 router.delete('/messages/:messageId', isAuthenticated, deleteMessage);
 router.patch('/messages/:messageId', isAuthenticated, editMessage);
@@ -40,6 +40,7 @@ router.get('/messages/unread/count', isAuthenticated, getUnreadCount);
 
 // Advanced Features
 router.post('/messages/attachment', isAuthenticated, sendAttachment);
+router.post('/pusher/auth', isAuthenticated,pusherAuth);
 router.post('/messages/:messageId/reactions', isAuthenticated, addReaction);
 router.post('/conversations/:userId/typing', isAuthenticated, setTypingStatus);
 router.get('/messages/search', isAuthenticated, searchMessages);
