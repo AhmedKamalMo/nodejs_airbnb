@@ -90,10 +90,10 @@ messageSchema.index({ content: 'text' });
 messageSchema.pre('find', function() {
     this.populate({
         path: 'sender',
-        select: 'name email profilePicture'
+        select: 'name email avatar'
     }).populate({
         path: 'receiver',
-        select: 'name email profilePicture'
+        select: 'name email avatar'
     });
 });
 

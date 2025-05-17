@@ -1,3 +1,4 @@
+const Hotel = require("../models/Hotel");
 const Review = require("../models/Review"); // Import the Review model
 const mongoose = require("mongoose");
 
@@ -34,7 +35,7 @@ exports.createReview = async (req, res) => {
     }
 
     const reviewData = {
-      bookingId:bookingId,
+      bookingId: bookingId,
       HotelId: HotelId,
       userId: req.user._id,
       rating,
@@ -43,7 +44,14 @@ exports.createReview = async (req, res) => {
 
     const review = new Review(reviewData);
     await review.save();
+    const hotel = await Hotel.findById(HotelId);
+    if (!hotel) {
+      return res.status(404).json({ message: "Hotel not found" });
+    }
 
+    hotel.reviews.push({ reviewId: review._id }); 
+    await hotel.save();
+    
     res.status(201).json({ message: "Review created successfully", review });
   } catch (error) {
     res.status(400).json({ message: error.message });

@@ -17,6 +17,17 @@ try {
     console.error('Pusher initialization error:', error);
 }
 
+exports.pusherAuth = (req, res) => {
+    if (!pusher) {
+        return res.status(500).json({ message: 'Pusher not initialized' });
+    }
+    const socketId = req.body.socket_id;
+    const channel = req.body.channel_name;
+
+    // تحقق من السماح بالوصول (مثلاً المستخدم يحق له الاشتراك)
+    const auth = pusher.authenticate(socketId, channel);
+    res.send(auth);
+}
 // Helper function to trigger Pusher events
 const triggerPusherEvent = async (channel, event, data) => {
     try {
@@ -37,7 +48,7 @@ exports.sendMessage = asyncHandler(async (req, res) => {
             message: 'User not authenticated'
         });
     }
-    
+
     const senderId = req.user._id;
 
     const message = await Message.create({
@@ -50,8 +61,8 @@ exports.sendMessage = asyncHandler(async (req, res) => {
     });
 
     const populatedMessage = await Message.findById(message._id)
-        .populate('sender')
-        .populate('receiver');
+        .populate({ path: 'sender', select: 'name email avatar _id' })
+        .populate({ path: 'receiver', select: 'name email avatar _id' });
 
     await triggerPusherEvent(`chat-${receiverId}`, 'new-message', { message: populatedMessage });
 
@@ -91,7 +102,7 @@ exports.editMessage = asyncHandler(async (req, res) => {
 
     const message = await Message.findOneAndUpdate(
         { _id: messageId, sender: req.user._id },
-        { 
+        {
             content,
             edited: true,
             editedAt: new Date()
@@ -168,7 +179,7 @@ exports.getUnreadCount = asyncHandler(async (req, res) => {
 // Send attachment
 exports.sendAttachment = asyncHandler(async (req, res) => {
     const { receiverId, attachmentType, attachmentUrl } = req.body;
-    
+
     const message = await Message.create({
         sender: req.user._id,
         receiver: receiverId,
@@ -207,7 +218,7 @@ exports.addReaction = asyncHandler(async (req, res) => {
         });
     }
 
-    await triggerPusherEvent(`chat-${message.sender}`, 'message-reaction', { 
+    await triggerPusherEvent(`chat-${message.sender}`, 'message-reaction', {
         messageId,
         userId: req.user._id,
         reaction
@@ -246,9 +257,9 @@ exports.searchMessages = asyncHandler(async (req, res) => {
             { content: { $regex: query, $options: 'i' } }
         ]
     })
-    .sort({ createdAt: -1 })
-    .populate('sender')
-    .populate('receiver');
+        .sort({ createdAt: -1 })
+        .populate('sender')
+        .populate('receiver');
 
     res.status(200).json({
         status: 'success',
@@ -267,10 +278,10 @@ exports.getConversation = asyncHandler(async (req, res) => {
             { sender: userId, receiver: currentUserId }
         ]
     })
-    .sort({ createdAt: 1 })
-    .populate('sender')
-    .populate('receiver')
-    .populate('booking');
+        .sort({ createdAt: 1 })
+        .populate({ path: 'sender', select: 'name email avatar _id' })
+        .populate({ path: 'receiver', select: 'name email avatar _id' })
+        .populate('booking');
 
     // Mark messages as read
     await Message.updateMany(
@@ -278,7 +289,7 @@ exports.getConversation = asyncHandler(async (req, res) => {
         { read: true, readAt: new Date() }
     );
 
-    await triggerPusherEvent(`chat-${userId}`, 'messages-read', { 
+    await triggerPusherEvent(`chat-${userId}`, 'messages-read', {
         userId: currentUserId
     });
 
@@ -295,8 +306,8 @@ exports.getAllConversations = asyncHandler(async (req, res) => {
     const conversations = await Message.aggregate([
         {
             $match: {
-                $or: [{ sender: new mongoose.Types.ObjectId(userId) }, 
-                      { receiver: new mongoose.Types.ObjectId(userId) }]
+                $or: [{ sender: new mongoose.Types.ObjectId(userId) },
+                { receiver: new mongoose.Types.ObjectId(userId) }]
             }
         },
         {
@@ -315,10 +326,12 @@ exports.getAllConversations = asyncHandler(async (req, res) => {
                 unreadCount: {
                     $sum: {
                         $cond: [
-                            { $and: [
-                                { $eq: ['$receiver', new mongoose.Types.ObjectId(userId)] },
-                                { $eq: ['$read', false] }
-                            ]},
+                            {
+                                $and: [
+                                    { $eq: ['$receiver', new mongoose.Types.ObjectId(userId)] },
+                                    { $eq: ['$read', false] }
+                                ]
+                            },
                             1,
                             0
                         ]
@@ -330,17 +343,17 @@ exports.getAllConversations = asyncHandler(async (req, res) => {
 
     // Populate user details with proper model references
     const populatedConversations = await Message.populate(conversations, [
-        { 
+        {
             path: 'lastMessage.sender',
             model: 'User',
             select: 'name email avatar _id'
         },
-        { 
+        {
             path: 'lastMessage.receiver',
             model: 'User',
             select: 'name email avatar _id'
         },
-        { 
+        {
             path: '_id',
             model: 'User',
             select: 'name email avatar _id'
@@ -356,10 +369,10 @@ exports.getAllConversations = asyncHandler(async (req, res) => {
 // Create group chat
 exports.createGroup = asyncHandler(async (req, res) => {
     const { name, members } = req.body;
-    
+
     // Group chat implementation would go here
     // This would require a new Group model and additional logic
-    
+
     res.status(501).json({
         status: 'error',
         message: 'Group chat functionality coming soon'
@@ -370,9 +383,9 @@ exports.createGroup = asyncHandler(async (req, res) => {
 exports.addToGroup = asyncHandler(async (req, res) => {
     const { groupId } = req.params;
     const { userId } = req.body;
-    
+
     // Group member addition logic would go here
-    
+
     res.status(501).json({
         status: 'error',
         message: 'Group chat functionality coming soon'
@@ -382,9 +395,9 @@ exports.addToGroup = asyncHandler(async (req, res) => {
 // Remove member from group
 exports.removeFromGroup = asyncHandler(async (req, res) => {
     const { groupId, userId } = req.params;
-    
+
     // Group member removal logic would go here
-    
+
     res.status(501).json({
         status: 'error',
         message: 'Group chat functionality coming soon'

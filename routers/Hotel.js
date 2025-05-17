@@ -295,7 +295,7 @@ router.get("/:id", GetHotelById);
  *       403:
  *         description: Forbidden - Only hosts can add a hotel
  */
-router.post("/", [isAuthenticated, authorizeAdmin], addHotel);
+router.post("/", [isAuthenticated, authorizeHost], addHotel);
 
 /**
  * @swagger
