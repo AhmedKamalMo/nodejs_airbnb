@@ -4,7 +4,7 @@ const app = express();
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const mongoose = require("mongoose");
-const { whatsappService, server } = require('./services/whatsapp'); // Import whatsappService
+const { whatsappService } = require('./services/whatsapp'); // Import whatsappService
 require("dotenv").config();
 var cors = require("cors");
 
@@ -106,7 +106,7 @@ const port = process.env.PORT || 3000;
 module.exports = app;
 
 // Start the server
-const server = app.listen(port, () => {
+const httpServer = app.listen(port, () => {
   console.log(`Server started on port ${port}`);
   if (process.env.NODE_ENV !== 'production') {
     console.log(`Server URL: http://localhost:${port}`);
@@ -118,7 +118,7 @@ const server = app.listen(port, () => {
 // Handle server shutdown gracefully
 process.on('SIGTERM', () => {
   console.log('SIGTERM received. Shutting down gracefully...');
-  server.close(() => {
+  httpServer.close(() => {
     console.log('Server closed.');
     process.exit(0);
   });

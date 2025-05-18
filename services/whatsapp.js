@@ -11,10 +11,6 @@ function formatPhoneNumber(phone) {
     return cleaned;
 }
 
-// Create Express app and server
-const app = express();
-const server = require('http').createServer(app);
-
 class WhatsAppService {
     constructor() {
         this.qrCodeData = null;
@@ -126,4 +122,4 @@ class WhatsAppService {
 // Create a singleton instance
 const whatsappService = new WhatsAppService();
 
-module.exports = { whatsappService, app, server };
+module.exports = { whatsappService };
