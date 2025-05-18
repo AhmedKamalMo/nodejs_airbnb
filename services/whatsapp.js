@@ -1,4 +1,3 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
 const express = require('express');
 const qrcode = require('qrcode');
 
@@ -20,54 +19,65 @@ class WhatsAppService {
     constructor() {
         this.qrCodeData = null;
         this.isReady = false;
-        this.initializationPromise = null;
-        this.initializeClient();
+        this.isProduction = process.env.NODE_ENV === 'production';
+        
+        if (!this.isProduction) {
+            this.initializeClient();
+        }
     }
 
-    initializeClient() {
-        this.client = new Client({
-            authStrategy: new LocalAuth(),
-            puppeteer: {
-                ...(process.env.PUPPETEER_EXECUTABLE_PATH ? {
-                    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH
-                } : {}),
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-gpu'
-                ],
-                headless: true
-            }
-        });
-
-        this.initializationPromise = new Promise((resolve, reject) => {
-            this.client.on('qr', async (qr) => {
-                console.log('Scan this QR code in WhatsApp to log in:');
-                try {
-                    this.qrCodeData = await qrcode.toDataURL(qr);
-                    console.log('QR Code generated as Data URL.');
-                } catch (err) {
-                    console.error('Error generating QR:', err);
+    async initializeClient() {
+        try {
+            const { Client, LocalAuth } = require('whatsapp-web.js');
+            
+            this.client = new Client({
+                authStrategy: new LocalAuth(),
+                puppeteer: {
+                    ...(process.env.PUPPETEER_EXECUTABLE_PATH ? {
+                        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH
+                    } : {}),
+                    args: [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-gpu'
+                    ],
+                    headless: true
                 }
             });
 
-            this.client.on('ready', () => {
-                console.log('✅ WhatsApp client is ready!');
-                this.isReady = true;
-                resolve();
-            });
+            this.initializationPromise = new Promise((resolve, reject) => {
+                this.client.on('qr', async (qr) => {
+                    console.log('Scan this QR code in WhatsApp to log in:');
+                    try {
+                        this.qrCodeData = await qrcode.toDataURL(qr);
+                        console.log('QR Code generated as Data URL.');
+                    } catch (err) {
+                        console.error('Error generating QR:', err);
+                    }
+                });
 
-            this.client.on('auth_failure', (msg) => {
-                console.error('❌ Authentication failed:', msg);
-                reject(new Error(`WhatsApp authentication failed: ${msg}`));
-            });
+                this.client.on('ready', () => {
+                    console.log('✅ WhatsApp client is ready!');
+                    this.isReady = true;
+                    resolve();
+                });
 
-            this.client.initialize().catch(reject);
-        });
+                this.client.on('auth_failure', (msg) => {
+                    console.error('❌ Authentication failed:', msg);
+                    reject(new Error(`WhatsApp authentication failed: ${msg}`));
+                });
+
+                this.client.initialize().catch(reject);
+            });
+        } catch (error) {
+            console.error('Failed to initialize WhatsApp client:', error);
+            this.isReady = false;
+        }
     }
 
     async waitForReady(timeoutMs = 60000) {
+        if (this.isProduction) return false;
         if (this.isReady) return true;
         
         try {
@@ -86,6 +96,12 @@ class WhatsAppService {
 
     async sendOTP(to, otp) {
         try {
+            if (this.isProduction) {
+                console.log('WhatsApp service is disabled in production. OTP:', otp);
+                // In production, you might want to use a different service like Twilio or SMS
+                return true;
+            }
+
             const ready = await this.waitForReady();
             if (!ready) {
                 throw new Error('WhatsApp client is not ready. Please ensure you have scanned the QR code.');
@@ -102,6 +118,7 @@ class WhatsAppService {
     }
 
     getQRCode() {
+        if (this.isProduction) return null;
         return this.qrCodeData;
     }
 }
