@@ -22,7 +22,7 @@ class WhatsAppService {
         this.client = new Client({
             authStrategy: new LocalAuth(), // ✅ حفظ الجلسة هنا
             puppeteer: {
-                // Only use custom executable path in Docker environment
+                // In Docker, use the installed Chromium. Otherwise, use the one that comes with Puppeteer
                 ...(process.env.PUPPETEER_EXECUTABLE_PATH ? {
                     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH
                 } : {}),
@@ -30,9 +30,9 @@ class WhatsAppService {
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
                     '--disable-dev-shm-usage',
-                    '--disable-accelerated-2d-canvas',
                     '--disable-gpu'
-                ]
+                ],
+                headless: true
             }
         });
 

@@ -1,9 +1,15 @@
 FROM node:20.17.0
 
-# Install Chrome and required dependencies for WhatsApp Web
+# Install Chrome dependencies
 RUN apt-get update && apt-get install -y \
     chromium \
     chromium-driver \
+    fonts-ipafont-gothic \
+    fonts-wqy-zenhei \
+    fonts-thai-tlwg \
+    fonts-kacst \
+    fonts-freefont-ttf \
+    libxss1 \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
     libcups2 \
@@ -17,6 +23,7 @@ RUN apt-get update && apt-get install -y \
     libpango-1.0-0 \
     libcairo2 \
     libasound2 \
+    libxtst6 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
