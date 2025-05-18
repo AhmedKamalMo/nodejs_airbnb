@@ -518,9 +518,18 @@ exports.chatbot = async (req, res) => {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                const results = (await response.json()).data || [];
+                const apiResponse = await response.json();
 
-                let reply = `I found ${results.length} places in Miami:\n\n`;
+                // ✅ التحقق من الرسالة إن لم يكن هناك نتائج
+                if (apiResponse.message === "No hotels found matching the criteria") {
+                    return res.json({
+                        response: `I couldn't find any places in ${location}. Try another location or adjust your filters.`
+                    });
+                }
+
+                const results = apiResponse.data || [];
+
+                let reply = `I found ${results.length} places in ${location}:\n\n`;
 
                 results.forEach((hotel, index) => {
                     const name = hotel.title || 'Unknown';
@@ -543,30 +552,31 @@ exports.chatbot = async (req, res) => {
 
                     if (hotel.houseRules && hotel.houseRules.length > 0) {
                         const houseRulesList = hotel.houseRules.join(", ");
-                        reply += `   🚷 House Rules: ${houseRulesList}\n`;
+                        reply += `   🚷 House Rules: ${houseRulesList}<br/>`;
                     }
 
                     // 🔗 إضافة الرابط المباشر لصفحة العقار
                     const propertyLink = `http://localhost:5173/details/${hotel._id}`;
-                    reply += `   🔗 View Property: ${propertyLink}<br/>`;
-
-
-                    reply += `<br/>`; // سطر فارغ بين كل نتيجة وأخرى
+                    reply += `   🔗 View Property: ${propertyLink}<br/><br/>`;
                 });
 
                 reply += "Would you like more details about any of these places?";
 
                 return res.json({ response: reply });
+
             } catch (err) {
-                console.error("Filter API Error:", err.message);
-                return res.json({ response: "حدث خطأ أثناء البحث عن أماكن." });
+                console.error("Filter API Error:", err.response?.data || err.message);
+                if (err.response) {
+                    console.error("Error response:", err.response.data);
+                }
+                return res.json({ response: `I couldn't find any places in ${location}. Try another location or adjust your filters.` });
             }
         }
 
         // Step 3: If not a search request, pass to AI chatbot
         chatMemory.push({ role: "user", content: message });
 
-        const aiResponse = await getAIResponse(chatMemory); // يمكنك استخدام OpenRouter أو OpenAI هنا
+        const aiResponse = await getAIResponse(chatMemory);
 
         chatMemory.push({ role: "assistant", content: aiResponse });
 
@@ -580,4 +590,4 @@ exports.chatbot = async (req, res) => {
         console.error("Error:", error.response?.data || error.message);
         res.status(500).json({ error: "Failed to process request" });
     }
-}
+};
