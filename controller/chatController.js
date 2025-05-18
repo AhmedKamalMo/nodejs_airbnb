@@ -21,13 +21,31 @@ exports.pusherAuth = (req, res) => {
     if (!pusher) {
         return res.status(500).json({ message: 'Pusher not initialized' });
     }
-    const socketId = req.body.socket_id;
-    const channel = req.body.channel_name;
 
-    // تحقق من السماح بالوصول (مثلاً المستخدم يحق له الاشتراك)
-    const auth = pusher.authenticate(socketId, channel);
-    res.send(auth);
-}
+    const socketId = req.body.socket_id;
+    const channelName = req.body.channel_name;
+    console.log('socketId:', socketId);
+    console.log('channelName:', channelName);
+
+    // ✅ التحقق من أن socket_id موجود
+    if (!socketId || typeof socketId !== 'string') {
+
+        return res.status(400).json({ error: 'Missing or invalid socket_id' });
+    }
+
+    // ✅ التحقق من أن channel name موجود
+    if (!channelName || typeof channelName !== 'string') {
+        return res.status(400).json({ error: 'Missing or invalid channel_name' });
+    }
+
+    try {
+        const auth = pusher.authenticate(socketId, channelName);
+        res.send(auth);
+    } catch (error) {
+        console.error('Error authenticating Pusher:', error);
+        res.status(500).json({ error: 'Failed to authenticate with Pusher' });
+    }
+};
 // Helper function to trigger Pusher events
 const triggerPusherEvent = async (channel, event, data) => {
     try {
@@ -433,4 +451,133 @@ exports.getOnlineUsers = asyncHandler(async (req, res) => {
     });
 });
 
+function parseAccommodationRequest(message) {
+    const locationMatch = message.match(/in\s+([\u0600-\u06FFa-zA-Z\s]+)/i);
+    const location = locationMatch ? locationMatch[1].trim() : null;
 
+    const accommodationKeywords = [
+        "apartment", "flat", "villa", "house", "room", "studio", "accommodation", "rent"
+    ];
+
+    const isAccommodationRequest = accommodationKeywords.some(keyword =>
+        message.toLowerCase().includes(keyword)
+    );
+
+    return { isAccommodationRequest, location };
+}
+async function getAIResponse(chatHistory) {
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: chatHistory,
+                temperature: 0.7
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content;
+
+    } catch (error) {
+        console.error("OpenRouter Error:", error.message);
+        return "عذرًا، حدث خطأ أثناء معالجة طلبك.";
+    }
+}
+const chatMemory = [
+    { role: "system", content: "You are a helpful AI assistant." }
+];
+exports.chatbot = async (req, res) => {
+    try {
+        const { message } = req.body;
+        if (!message) return res.status(400).json({ error: "Message is required" });
+
+        // Step 1: Check if it's an accommodation request
+        const { isAccommodationRequest, location } = parseAccommodationRequest(message);
+
+        if (isAccommodationRequest && location) {
+            try {
+                console.log("location ", location);
+
+                const url = new URL("http://localhost:3000/Hotel/flitter");
+                url.searchParams.append("city", location);
+                url.searchParams.append("limit", 5);
+                console.log("url :", url.toString());
+
+                const response = await fetch(url.toString());
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const results = (await response.json()).data || [];
+
+                let reply = `I found ${results.length} places in Miami:\n\n`;
+
+                results.forEach((hotel, index) => {
+                    const name = hotel.title || 'Unknown';
+                    const price = hotel.pricePerNight || 'Not specified';
+                    const rating = hotel.rating || 'No rating';
+                    const bedrooms = hotel.spaceDetails?.bedrooms || 0;
+                    const beds = hotel.spaceDetails?.beds || 0;
+                    const adults = hotel.capacity?.adults || 0;
+
+                    reply += `${index + 1}. ${name}<br/>`;
+                    reply += `   💵 Price per night: $${price}<br/>`;
+                    reply += `   ⭐ Rating: ${rating}<br/>`;
+                    reply += `   👪 Capacity: Up to ${adults} adults<br/>`;
+                    reply += `   🛏️ Bedrooms: ${bedrooms} | Beds: ${beds}<br/>`;
+
+                    if (hotel.amenities && hotel.amenities.length > 0) {
+                        const amenitiesList = hotel.amenities.map(a => a.name).join(", ");
+                        reply += `   ✅ Amenities: ${amenitiesList}<br/>`;
+                    }
+
+                    if (hotel.houseRules && hotel.houseRules.length > 0) {
+                        const houseRulesList = hotel.houseRules.join(", ");
+                        reply += `   🚷 House Rules: ${houseRulesList}\n`;
+                    }
+
+                    // 🔗 إضافة الرابط المباشر لصفحة العقار
+                    const propertyLink = `http://localhost:5173/details/${hotel._id}`;
+                    reply += `   🔗 View Property: ${propertyLink}<br/>`;
+
+
+                    reply += `<br/>`; // سطر فارغ بين كل نتيجة وأخرى
+                });
+
+                reply += "Would you like more details about any of these places?";
+
+                return res.json({ response: reply });
+            } catch (err) {
+                console.error("Filter API Error:", err.message);
+                return res.json({ response: "حدث خطأ أثناء البحث عن أماكن." });
+            }
+        }
+
+        // Step 3: If not a search request, pass to AI chatbot
+        chatMemory.push({ role: "user", content: message });
+
+        const aiResponse = await getAIResponse(chatMemory); // يمكنك استخدام OpenRouter أو OpenAI هنا
+
+        chatMemory.push({ role: "assistant", content: aiResponse });
+
+        if (chatMemory.length > 10) {
+            chatMemory.splice(0, chatMemory.length - 10);
+        }
+
+        res.json({ response: aiResponse });
+
+    } catch (error) {
+        console.error("Error:", error.response?.data || error.message);
+        res.status(500).json({ error: "Failed to process request" });
+    }
+}

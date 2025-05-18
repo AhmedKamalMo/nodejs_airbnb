@@ -1,7 +1,7 @@
 const express = require('express');
-const { 
-    sendMessage, 
-    getConversation, 
+const {
+    sendMessage,
+    getConversation,
     getAllConversations,
     // Message Management
     deleteMessage,
@@ -21,7 +21,8 @@ const {
     // User Status
     updateUserStatus,
     getOnlineUsers,
-    pusherAuth
+    pusherAuth,
+    chatbot
 } = require('../controller/chatController');
 const { isAuthenticated } = require('../middlewares/userauth');
 
@@ -37,10 +38,12 @@ router.patch('/messages/:messageId', isAuthenticated, editMessage);
 router.patch('/messages/:messageId/deliver', isAuthenticated, markAsDelivered);
 router.patch('/messages/:messageId/read', isAuthenticated, markAsRead);
 router.get('/messages/unread/count', isAuthenticated, getUnreadCount);
-
+// 
+router.post("/chatbot",chatbot);
+// 
 // Advanced Features
 router.post('/messages/attachment', isAuthenticated, sendAttachment);
-router.post('/pusher/auth', isAuthenticated,pusherAuth);
+router.post('/pusher/auth', isAuthenticated, pusherAuth);
 router.post('/messages/:messageId/reactions', isAuthenticated, addReaction);
 router.post('/conversations/:userId/typing', isAuthenticated, setTypingStatus);
 router.get('/messages/search', isAuthenticated, searchMessages);
