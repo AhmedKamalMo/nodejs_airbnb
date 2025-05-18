@@ -78,16 +78,19 @@ exports.updateReview = async (req, res) => {
 
 exports.deleteReviewById = async (req, res) => {
   try {
-    const deletedReview = await Review.findByIdAndDelete(req.params.id);
+    const reviewId = req.params.id;
+    const deletedReview = await Review.findByIdAndDelete(reviewId);
     if (!deletedReview) {
       return res.status(404).json({ message: "Review not found" });
     }
+    await Hotel.updateOne(
+      { "reviews.reviewId": reviewId },
+      { $pull: { reviews: { reviewId } } }
+    );
     res.status(200).json({ message: "Review deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-
-
 };
 exports.bookingReviewById = async (req, res) => {
   try {

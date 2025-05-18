@@ -452,18 +452,71 @@ exports.getOnlineUsers = asyncHandler(async (req, res) => {
 });
 
 function parseAccommodationRequest(message) {
-    const locationMatch = message.match(/in\s+([\u0600-\u06FFa-zA-Z\s]+)/i);
-    const location = locationMatch ? locationMatch[1].trim() : null;
+    // Step 1: Detect Location (e.g., "in Miami")
+    const locationMatch = message.match(/in\s+([a-zA-Z\s]+)/i);
+    const location = locationMatch ? locationMatch[1]?.trim() : null;
 
+    // Step 2: Keywords indicating an accommodation request
     const accommodationKeywords = [
         "apartment", "flat", "villa", "house", "room", "studio", "accommodation", "rent"
     ];
-
     const isAccommodationRequest = accommodationKeywords.some(keyword =>
         message.toLowerCase().includes(keyword)
     );
 
-    return { isAccommodationRequest, location };
+    // Step 3: Extract price range (e.g., "under $600" or "from 200 to 400")
+    let minPrice, maxPrice;
+    const priceMatch = message.match(/(\d+)\s*to\s*(\d+)|(\d+)\s*per night|under\s+(\d+)|below\s+(\d+)|less than\s+(\d+)/i);
+
+    if (priceMatch) {
+        if (priceMatch[1] && priceMatch[2]) {
+            minPrice = Number(priceMatch[1]);
+            maxPrice = Number(priceMatch[2]);
+        } else if (priceMatch[3]) {
+            maxPrice = Number(priceMatch[3]);
+        } else if (priceMatch[4] || priceMatch[5] || priceMatch[6]) {
+            maxPrice = Number(priceMatch[4] || priceMatch[5] || priceMatch[6]);
+        }
+    }
+
+    // Step 4: Extract number of people (e.g., "for 4 adults")
+    const adultsMatch = message.match(/for\s*(\d+)\s*(?:people|person|adults|guest)/i);
+    const adults = adultsMatch ? Number(adultsMatch[1]) : undefined;
+
+    // Step 5: Amenities mapping (keyword => ID)
+    const amenitiesMap = {
+        'pool': '68025bdcc1fca36d3274431c',   // Swimming Pool
+        'wifi': '68025bf0c1fca36d3274431e',     // Free Wi-Fi
+        'gym': '68025c02c1fca36d32744320',     // Gym
+        'parking': '68025c19c1fca36d32744324',   // Parking
+        "Coffee ": '68025c0ec1fca36d32744322',
+        'spa': '68025c3fc1fca36d32744326',     // Spa
+        'restaurant': '68025c57c1fca36d32744328', // Restaurant
+    };
+
+    const amenities = [];
+    Object.keys(amenitiesMap).forEach(keyword => {
+        if (message.toLowerCase().includes(keyword)) {
+            amenities.push(amenitiesMap[keyword]);
+        }
+    });
+
+    // Step 6: Pet-friendly detection
+    const petsMatch = message.toLowerCase().includes("pet") ||
+        message.toLowerCase().includes("dog") ||
+        message.toLowerCase().includes("cat");
+    const pets = petsMatch ? "allowed" : undefined;
+
+    // Final result
+    return {
+        isAccommodationRequest,
+        location,
+        minPrice,
+        maxPrice,
+        adults,
+        amenities,
+        pets
+    };
 }
 async function getAIResponse(chatHistory) {
     try {
@@ -499,20 +552,25 @@ exports.chatbot = async (req, res) => {
     try {
         const { message } = req.body;
         if (!message) return res.status(400).json({ error: "Message is required" });
+        const parsed = parseAccommodationRequest(message);
 
         // Step 1: Check if it's an accommodation request
         const { isAccommodationRequest, location } = parseAccommodationRequest(message);
 
         if (isAccommodationRequest && location) {
             try {
-                console.log("location ", location);
 
                 const url = new URL("http://localhost:3000/Hotel/flitter");
-                url.searchParams.append("city", location);
-                url.searchParams.append("limit", 5);
-                console.log("url :", url.toString());
+                if (parsed.location) url.searchParams.append("city", parsed.location);
+                if (parsed.minPrice) url.searchParams.append("minPrice", parsed.minPrice);
+                if (parsed.maxPrice) url.searchParams.append("maxPrice", parsed.maxPrice);
+                if (parsed.adults) url.searchParams.append("adults", parsed.adults);
+                if (parsed.amenities?.length > 0) url.searchParams.append("amenities", parsed.amenities.join(","));
+                if (parsed.pets !== undefined) url.searchParams.append("pets", parsed.pets);
+                url.searchParams.append("limit", 5); // Optional: limit number of results
+                console.log("URL: ", url);
 
-                const response = await fetch(url.toString());
+                const response = await fetch(url);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
