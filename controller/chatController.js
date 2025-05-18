@@ -489,7 +489,7 @@ async function getAIResponse(chatHistory) {
 
     } catch (error) {
         console.error("OpenRouter Error:", error.message);
-        return "عذرًا، حدث خطأ أثناء معالجة طلبك.";
+        return error.message;
     }
 }
 const chatMemory = [
