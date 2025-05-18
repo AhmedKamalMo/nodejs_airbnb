@@ -1,5 +1,5 @@
 // const jwt = require("jsonwebtoken");
-// const bcrypt = require("bcryptjs");
+const bcrypt = require("bcryptjs");
 // const usersModel = require("../../models/users");
 
 // const { OAuth2Client } = require('google-auth-library');
@@ -7,12 +7,11 @@
 // const jwt = require('jsonwebtoken');
 
 const Registration = async (req, res) => {
-
   try {
-    const { name, email, dateOfBirth,phone } = req.body;
+    const { name, email, dateOfBirth, phone, password } = req.body;
 
-    if (!name || !email || !dateOfBirth|| !phone) {
-      return res.status(400).json({ message: "All fields are required" });
+    if (!name || !email || !dateOfBirth || !phone) {
+      return res.status(400).json({ message: "All required fields are not provided" });
     }
 
     const existingUser = await usersModel.findOne({ email });
@@ -20,7 +19,23 @@ const Registration = async (req, res) => {
       return res.status(409).json({ message: "User already exists" });
     }
 
-    const newUser = new usersModel(req.body);
+    const userData = {
+      name,
+      email,
+      dateOfBirth,
+      phone
+    };
+
+    if (password) {
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long" });
+      }
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      userData.password = hashedPassword;
+    }
+
+    const newUser = new usersModel(userData);
     await newUser.save();
 
     res.status(201).json({ message: "User registered successfully" });

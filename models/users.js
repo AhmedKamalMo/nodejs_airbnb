@@ -84,8 +84,8 @@ const bcrypt = require("bcryptjs");
 
 // upadte with ghadad
 const userSchema = new mongoose.Schema({
-    resetPasswordToken: String,
-    resetPasswordExpire: Date,
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
   email: {
     type: String,
     required: false,
@@ -99,6 +99,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: false,
     unique: true,
+    sparse: true,
     match: [/^(01)(0|1|2|5)\d{8}$/, "Invalid phone number"],
   },
   dateOfBirth: {
@@ -125,10 +126,10 @@ const userSchema = new mongoose.Schema({
     maxlength: 50,
   },
   googleId: String,
-  avatar: {type: String, trim: true, default: "https://www.svgrepo.com/show/483464/person.svg"},
+  avatar: { type: String, trim: true, default: "https://www.svgrepo.com/show/483464/person.svg" },
   isGoogleUser: { type: Boolean, default: false },
   role: { type: String, enum: ["Guest", "Host", "Admin"], default: "Guest" },
-    hostDetails: {
+  hostDetails: {
     isSuperHost: { type: Boolean, default: false },
 
     reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],

@@ -335,7 +335,7 @@ router.post("/", [isAuthenticated, authorizeHost], addHotel);
  *       404:
  *         description: Hotel not found
  */
-router.patch("/:id", [isAuthenticated, authorizeAdmin], UpdateByID);
+router.patch("/:id", [isAuthenticated, authorizeAdminOrHost], UpdateByID);
 
 /**
  * @swagger
@@ -363,7 +363,7 @@ router.patch("/:id", [isAuthenticated, authorizeAdmin], UpdateByID);
  *       404:
  *         description: Hotel not found
  */
-router.delete("/:id", [isAuthenticated, authorizeAdmin], DeleteHotel);
+router.delete("/:id", [isAuthenticated, authorizeAdminOrHost], DeleteHotel);
 /**
  * @swagger
  * /Hotel/status/{id}:
@@ -400,7 +400,7 @@ router.delete("/:id", [isAuthenticated, authorizeAdmin], DeleteHotel);
  *         description: Hotel not found
  */
 
-router.patch("/status/:id", [isAuthenticated, authorizeAdmin], updateStatus);
+router.patch("/status/:id", [isAuthenticated, authorizeAdminOrHost], updateStatus);
 
 
 
