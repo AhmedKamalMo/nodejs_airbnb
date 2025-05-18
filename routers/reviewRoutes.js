@@ -8,6 +8,7 @@ const {
   updateReview,
   deleteReviewById,
   totalReviews,
+  bookingReviewById,
 } = require("../controller/Reviews");
 const { checkReviewOwner } = require("../middlewares/checkReviw");
 const router = express.Router();
@@ -164,6 +165,7 @@ router.patch("/:id", isAuthenticated, checkReviewOwner, updateReview);
  */
 router.delete("/:id", isAuthenticated, checkReviewOwner, deleteReviewById);
 
+router.get("/bookings/:id",isAuthenticated, bookingReviewById);
 /**
  * @swagger
  * /reviews/hotel/{hotelId}/rating:

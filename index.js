@@ -14,6 +14,7 @@ const reviewRoutes = require("./routers/reviewRoutes");
 const users = require("./routers/usrs");
 const paymentRoutes = require("./routers/payment");
 const amenities=require("./routers/amenity")
+const chatRoutes = require('./routers/chatRouter');
 const { scheduleBookingCleanup } = require('./utils/bookingCleanup');
 app.use(express.json());
 app.use(express.static("static"));
@@ -67,7 +68,8 @@ app.use("/Hotel", HotelRoutes);
 app.use("/Bookings", Booking);
 app.use("/reviews", reviewRoutes);
 app.use("/payments", paymentRoutes);
-app.use("/amenities",amenities)
+app.use("/amenities",amenities);
+app.use('/chat', chatRoutes);
 // Global error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
