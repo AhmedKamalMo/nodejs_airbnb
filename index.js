@@ -37,10 +37,8 @@ app.get('/qr', (req, res) => {
 });
 
 
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log("✅ MongoDB Atlas Connected Successfully");
     // Start the booking cleanup scheduler
@@ -107,13 +105,22 @@ const port = process.env.PORT || 3000;
 // Export the Express API
 module.exports = app;
 
-// Only listen directly if not running on Vercel
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(port, () => {
-    console.log(`Server started on http://localhost:${port}`);
+// Start the server
+const server = app.listen(port, () => {
+  console.log(`Server started on port ${port}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`Server URL: http://localhost:${port}`);
     console.log(`Swagger Docs available at http://localhost:${port}/api-docs`);
     console.log(`📲 Scan WhatsApp QR at http://localhost:${port}/qr`);
+  }
+});
 
+// Handle server shutdown gracefully
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed.');
+    process.exit(0);
   });
-}
+});
 
