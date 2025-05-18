@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const usersModel = require("../../models/users");
-const whatsappService = require('../../services/whatsapp');
+const { whatsappService } = require('../../services/whatsapp');
 
 // Store OTP codes temporarily (in production, use Redis or similar)
 const otpStore = new Map();

@@ -12,17 +12,22 @@ function formatPhoneNumber(phone) {
     return cleaned;
 }
 
-// إنشاء app و server
+// Create Express app and server
 const app = express();
 const server = require('http').createServer(app);
 
 class WhatsAppService {
     constructor() {
         this.qrCodeData = null;
+        this.isReady = false;
+        this.initializationPromise = null;
+        this.initializeClient();
+    }
+
+    initializeClient() {
         this.client = new Client({
-            authStrategy: new LocalAuth(), // ✅ حفظ الجلسة هنا
+            authStrategy: new LocalAuth(),
             puppeteer: {
-                // In Docker, use the installed Chromium. Otherwise, use the one that comes with Puppeteer
                 ...(process.env.PUPPETEER_EXECUTABLE_PATH ? {
                     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH
                 } : {}),
@@ -36,33 +41,55 @@ class WhatsAppService {
             }
         });
 
-        this.isReady = false;
+        this.initializationPromise = new Promise((resolve, reject) => {
+            this.client.on('qr', async (qr) => {
+                console.log('Scan this QR code in WhatsApp to log in:');
+                try {
+                    this.qrCodeData = await qrcode.toDataURL(qr);
+                    console.log('QR Code generated as Data URL.');
+                } catch (err) {
+                    console.error('Error generating QR:', err);
+                }
+            });
 
-        this.client.on('qr', async (qr) => {
-            console.log('Scan this QR code in WhatsApp to log in:');
-            try {
-                this.qrCodeData = await qrcode.toDataURL(qr);
-                console.log('QR Code generated as Data URL.');
-            } catch (err) {
-                console.error('Error generating QR:', err);
-            }
+            this.client.on('ready', () => {
+                console.log('✅ WhatsApp client is ready!');
+                this.isReady = true;
+                resolve();
+            });
+
+            this.client.on('auth_failure', (msg) => {
+                console.error('❌ Authentication failed:', msg);
+                reject(new Error(`WhatsApp authentication failed: ${msg}`));
+            });
+
+            this.client.initialize().catch(reject);
         });
+    }
 
-        this.client.on('ready', () => {
-            console.log('✅ WhatsApp client is ready!');
-            this.isReady = true;
-        });
-
-        this.client.on('auth_failure', (msg) => {
-            console.error('❌ Authentication failed:', msg);
-        });
-
-        this.client.initialize();
+    async waitForReady(timeoutMs = 60000) {
+        if (this.isReady) return true;
+        
+        try {
+            await Promise.race([
+                this.initializationPromise,
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('WhatsApp initialization timeout')), timeoutMs)
+                )
+            ]);
+            return true;
+        } catch (error) {
+            console.error('Error waiting for WhatsApp client:', error);
+            return false;
+        }
     }
 
     async sendOTP(to, otp) {
         try {
-            if (!this.isReady) throw new Error('WhatsApp not ready.');
+            const ready = await this.waitForReady();
+            if (!ready) {
+                throw new Error('WhatsApp client is not ready. Please ensure you have scanned the QR code.');
+            }
 
             const message = `Your AirBnB login OTP is: ${otp}. This code will expire in 5 minutes.`;
             const formattedNumber = formatPhoneNumber(to);
@@ -73,8 +100,13 @@ class WhatsAppService {
             return false;
         }
     }
+
+    getQRCode() {
+        return this.qrCodeData;
+    }
 }
 
+// Create a singleton instance
 const whatsappService = new WhatsAppService();
 
 module.exports = { whatsappService, app, server };
