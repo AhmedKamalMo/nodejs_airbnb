@@ -4,6 +4,7 @@ const app = express();
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const mongoose = require("mongoose");
+const {  server } = require('./services/whatsapp'); // أو المسار الصحيح
 require("dotenv").config();
 var cors = require("cors");
 
@@ -13,7 +14,7 @@ const Booking = require("./routers/Booking");
 const reviewRoutes = require("./routers/reviewRoutes");
 const users = require("./routers/usrs");
 const paymentRoutes = require("./routers/payment");
-const amenities=require("./routers/amenity")
+const amenities = require("./routers/amenity")
 const chatRoutes = require('./routers/chatRouter');
 const { scheduleBookingCleanup } = require('./utils/bookingCleanup');
 app.use(express.json());
@@ -68,7 +69,7 @@ app.use("/Hotel", HotelRoutes);
 app.use("/Bookings", Booking);
 app.use("/reviews", reviewRoutes);
 app.use("/payments", paymentRoutes);
-app.use("/amenities",amenities);
+app.use("/amenities", amenities);
 app.use('/chat', chatRoutes);
 // Global error handling middleware
 app.use((err, req, res, next) => {
@@ -93,9 +94,11 @@ module.exports = app;
 
 // Only listen directly if not running on Vercel
 if (process.env.NODE_ENV !== 'production') {
-  app.listen(port, () => {
+  server.listen(port, () => {
     console.log(`Server started on http://localhost:${port}`);
     console.log(`Swagger Docs available at http://localhost:${port}/api-docs`);
+    console.log(`📲 Scan WhatsApp QR at http://localhost:${port}/qr`);
+
   });
 }
 

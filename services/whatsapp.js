@@ -1,25 +1,27 @@
-const { Client } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
+const { Client, LocalAuth } = require('whatsapp-web.js');
+const express = require('express');
+const qrcode = require('qrcode');
 
-// Helper function to format phone number
 function formatPhoneNumber(phone) {
-    // Remove any non-digit characters
     let cleaned = phone.replace(/\D/g, '');
-    
-    // Remove leading '+' if present
     if (cleaned.startsWith('00')) {
         cleaned = cleaned.substring(2);
     } else if (cleaned.startsWith('0')) {
-        // For Egyptian numbers starting with 0, remove 0 and add country code
         cleaned = '20' + cleaned.substring(1);
     }
-    
     return cleaned;
 }
+
+// إنشاء app و server
+const app = express();
+const server = require('http').createServer(app);
+
+let qrCodeData = null;
 
 class WhatsAppService {
     constructor() {
         this.client = new Client({
+            authStrategy: new LocalAuth(), // ✅ حفظ الجلسة هنا
             puppeteer: {
                 args: ['--no-sandbox']
             }
@@ -27,38 +29,49 @@ class WhatsAppService {
 
         this.isReady = false;
 
-        // Generate QR code for authentication
-        this.client.on('qr', (qr) => {
+        this.client.on('qr', async (qr) => {
             console.log('Scan this QR code in WhatsApp to log in:');
-            qrcode.generate(qr, { small: true });
+            try {
+                qrCodeData = await qrcode.toDataURL(qr);
+                console.log('QR Code generated as Data URL.');
+            } catch (err) {
+                console.error('Error generating QR:', err);
+            }
         });
 
-        // When client is ready
+        app.get('/qr', (req, res) => {
+            if (!qrCodeData) {
+                return res.send('Please wait... QR is being generated.');
+            }
+
+            res.send(`
+                <html>
+                    <body style="text-align:center;">
+                        <h2>Scan the WhatsApp QR</h2>
+                        <img src="${qrCodeData}" alt="QR Code" style="width:300px;height:300px;" />
+                    </body>
+                </html>
+            `);
+        });
+
         this.client.on('ready', () => {
-            console.log('WhatsApp client is ready!');
+            console.log('✅ WhatsApp client is ready!');
             this.isReady = true;
         });
 
-        // Initialize the client
+        this.client.on('auth_failure', (msg) => {
+            console.error('❌ Authentication failed:', msg);
+        });
+
         this.client.initialize();
     }
 
-    // Function to send OTP
     async sendOTP(to, otp) {
         try {
-            if (!this.isReady) {
-                throw new Error('WhatsApp client not ready. Please scan QR code first.');
-            }
+            if (!this.isReady) throw new Error('WhatsApp not ready.');
 
-            // Format the message
             const message = `Your AirBnB login OTP is: ${otp}. This code will expire in 5 minutes.`;
-
-            // Format the phone number
             const formattedNumber = formatPhoneNumber(to);
-            
-            console.log('Sending WhatsApp message to:', formattedNumber);
-            
-            // Send message
             await this.client.sendMessage(`${formattedNumber}@c.us`, message);
             return true;
         } catch (error) {
@@ -68,7 +81,6 @@ class WhatsAppService {
     }
 }
 
-// Create a singleton instance
 const whatsappService = new WhatsAppService();
 
-module.exports = whatsappService;
+module.exports = { whatsappService, app, server };
