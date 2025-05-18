@@ -22,7 +22,14 @@ class WhatsAppService {
         this.client = new Client({
             authStrategy: new LocalAuth(), // ✅ حفظ الجلسة هنا
             puppeteer: {
-                args: ['--no-sandbox']
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--disable-gpu'
+                ]
             }
         });
 
