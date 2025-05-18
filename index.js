@@ -4,7 +4,7 @@ const app = express();
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const mongoose = require("mongoose");
-const {  server } = require('./services/whatsapp'); // أو المسار الصحيح
+const { whatsappService, server } = require('./services/whatsapp'); // Import whatsappService
 require("dotenv").config();
 var cors = require("cors");
 
@@ -20,6 +20,21 @@ const { scheduleBookingCleanup } = require('./utils/bookingCleanup');
 app.use(express.json());
 app.use(express.static("static"));
 app.use(cors());
+
+// WhatsApp QR Route
+app.get('/qr', (req, res) => {
+  if (!whatsappService.qrCodeData) {
+    return res.send('Please wait... QR is being generated.');
+  }
+  res.send(`
+    <html>
+      <body style="text-align:center;">
+        <h2>Scan the WhatsApp QR</h2>
+        <img src="${whatsappService.qrCodeData}" alt="QR Code" style="width:300px;height:300px;" />
+      </body>
+    </html>
+  `);
+});
 
 
 mongoose.connect(process.env.MONGO_URI, {
@@ -94,7 +109,7 @@ module.exports = app;
 
 // Only listen directly if not running on Vercel
 if (process.env.NODE_ENV !== 'production') {
-  server.listen(port, () => {
+  app.listen(port, () => {
     console.log(`Server started on http://localhost:${port}`);
     console.log(`Swagger Docs available at http://localhost:${port}/api-docs`);
     console.log(`📲 Scan WhatsApp QR at http://localhost:${port}/qr`);

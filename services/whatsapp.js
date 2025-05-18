@@ -16,10 +16,9 @@ function formatPhoneNumber(phone) {
 const app = express();
 const server = require('http').createServer(app);
 
-let qrCodeData = null;
-
 class WhatsAppService {
     constructor() {
+        this.qrCodeData = null;
         this.client = new Client({
             authStrategy: new LocalAuth(), // ✅ حفظ الجلسة هنا
             puppeteer: {
@@ -32,26 +31,11 @@ class WhatsAppService {
         this.client.on('qr', async (qr) => {
             console.log('Scan this QR code in WhatsApp to log in:');
             try {
-                qrCodeData = await qrcode.toDataURL(qr);
+                this.qrCodeData = await qrcode.toDataURL(qr);
                 console.log('QR Code generated as Data URL.');
             } catch (err) {
                 console.error('Error generating QR:', err);
             }
-        });
-
-        app.get('/qr', (req, res) => {
-            if (!qrCodeData) {
-                return res.send('Please wait... QR is being generated.');
-            }
-
-            res.send(`
-                <html>
-                    <body style="text-align:center;">
-                        <h2>Scan the WhatsApp QR</h2>
-                        <img src="${qrCodeData}" alt="QR Code" style="width:300px;height:300px;" />
-                    </body>
-                </html>
-            `);
         });
 
         this.client.on('ready', () => {
