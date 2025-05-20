@@ -1,3 +1,3 @@
-2025/05/19-01:44:43.186 1068 Reusing MANIFEST E:\Full stack using mearn_ITI\projects\final project\nodejs\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
-2025/05/19-01:44:43.186 1068 Recovering log #6
-2025/05/19-01:44:43.187 1068 Reusing old log E:\Full stack using mearn_ITI\projects\final project\nodejs\.wwebjs_auth\session\Default\Local Storage\leveldb/000006.log 
+2025/05/19-16:12:00.128 403c Reusing MANIFEST E:\Full stack using mearn_ITI\projects\final project\nodejs\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
+2025/05/19-16:12:00.164 403c Recovering log #12
+2025/05/19-16:12:00.357 403c Reusing old log E:\Full stack using mearn_ITI\projects\final project\nodejs\.wwebjs_auth\session\Default\Local Storage\leveldb/000012.log 

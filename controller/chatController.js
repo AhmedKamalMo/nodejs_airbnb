@@ -552,14 +552,14 @@ exports.chatbot = async (req, res) => {
     try {
         const { message } = req.body;
         if (!message) return res.status(400).json({ error: "Message is required" });
+
+        // Step 1: Parse the message to check for accommodation request
         const parsed = parseAccommodationRequest(message);
 
-        // Step 1: Check if it's an accommodation request
-        const { isAccommodationRequest, location } = parseAccommodationRequest(message);
-
-        if (isAccommodationRequest && location) {
+        // Step 2: Check if it's an accommodation request based on keywords and location
+        if (parsed.isAccommodationRequest && parsed.location) {
             try {
-
+                // 🔍 It's an accommodation request — proceed with search
                 const url = new URL("http://localhost:3000/Hotel/flitter");
                 if (parsed.location) url.searchParams.append("city", parsed.location);
                 if (parsed.minPrice) url.searchParams.append("minPrice", parsed.minPrice);
@@ -567,7 +567,8 @@ exports.chatbot = async (req, res) => {
                 if (parsed.adults) url.searchParams.append("adults", parsed.adults);
                 if (parsed.amenities?.length > 0) url.searchParams.append("amenities", parsed.amenities.join(","));
                 if (parsed.pets !== undefined) url.searchParams.append("pets", parsed.pets);
-                url.searchParams.append("limit", 5); // Optional: limit number of results
+                url.searchParams.append("limit", 5);
+
                 console.log("URL: ", url);
 
                 const response = await fetch(url);
@@ -578,16 +579,15 @@ exports.chatbot = async (req, res) => {
 
                 const apiResponse = await response.json();
 
-                // ✅ التحقق من الرسالة إن لم يكن هناك نتائج
                 if (apiResponse.message === "No hotels found matching the criteria") {
                     return res.json({
-                        response: `I couldn't find any places in ${location}. Try another location or adjust your filters.`
+                        response: `I couldn't find any places in ${parsed.location}. Try another location or adjust your filters.`
                     });
                 }
 
                 const results = apiResponse.data || [];
 
-                let reply = `I found ${results.length} places in ${location}:\n\n`;
+                let reply = `I found ${results.length} places in ${parsed.location}:\n\n`;
 
                 results.forEach((hotel, index) => {
                     const name = hotel.title || 'Unknown';
@@ -613,9 +613,8 @@ exports.chatbot = async (req, res) => {
                         reply += `   🚷 House Rules: ${houseRulesList}<br/>`;
                     }
 
-                    // 🔗 إضافة الرابط المباشر لصفحة العقار
                     const propertyLink = `http://localhost:5173/details/${hotel._id}`;
-                    reply += `   🔗 View Property: ${propertyLink}<br/><br/>`;
+                    reply += `🔗 View Property: <a href="${propertyLink}" target="_blank">Click here</a><br/><br/>`;
                 });
 
                 reply += "Would you like more details about any of these places?";
@@ -624,14 +623,11 @@ exports.chatbot = async (req, res) => {
 
             } catch (err) {
                 console.error("Filter API Error:", err.response?.data || err.message);
-                if (err.response) {
-                    console.error("Error response:", err.response.data);
-                }
-                return res.json({ response: `I couldn't find any places in ${location}. Try another location or adjust your filters.` });
+                return res.json({ response: `I couldn't find any places in ${parsed.location}. Try another location or adjust your filters.` });
             }
         }
 
-        // Step 3: If not a search request, pass to AI chatbot
+        // Step 3: If NOT an accommodation request → pass to AI chatbot
         chatMemory.push({ role: "user", content: message });
 
         const aiResponse = await getAIResponse(chatMemory);
@@ -639,13 +635,13 @@ exports.chatbot = async (req, res) => {
         chatMemory.push({ role: "assistant", content: aiResponse });
 
         if (chatMemory.length > 10) {
-            chatMemory.splice(0, chatMemory.length - 10);
+            chatMemory.splice(0, chatMemory.length - 10); // Keep memory size limited
         }
 
         res.json({ response: aiResponse });
 
     } catch (error) {
-        console.error("Error:", error.response?.data || error.message);
+        console.error("Error:", error.message);
         res.status(500).json({ error: "Failed to process request" });
     }
 };
