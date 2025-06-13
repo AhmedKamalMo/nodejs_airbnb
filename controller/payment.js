@@ -244,8 +244,8 @@ exports.createPayPalPayment = async (req, res) => {
                 }
             ],
             application_context: {
-                return_url: `http://localhost:5173/payment/success?Paymentid=${payment._id}`,
-                cancel_url: "http://localhost:3000/payment/cancel",
+                return_url: `https://airbnb-reactproject.vercel.app/payment/success?Paymentid=${payment._id}`,
+                cancel_url: "https://fundamental-amitie-ahmedkamal-a550a1ad.koyeb.app/payment/cancel",
                 user_action: "PAY_NOW",
                 shipping_preference: "NO_SHIPPING"
             }
