@@ -19,8 +19,21 @@ const chatRoutes = require('./routers/chatRouter');
 const { scheduleBookingCleanup } = require('./utils/bookingCleanup');
 app.use(express.json());
 app.use(express.static("static"));
-app.use(cors());
-
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-API-Key',
+    'X-Admin-Secret',
+    'X-Client-Type',
+    'x-api-key',
+    'x-admin-secret',
+    'x-client-type'
+  ],
+  credentials: true
+}));
 // WhatsApp QR Route
 app.get('/qr', (req, res) => {
   if (!whatsappService.qrCodeData) {
